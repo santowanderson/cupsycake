@@ -42,6 +42,6 @@ export class CartComponent implements OnInit {
   }
 
   onContinueShopping(): void {
-    this.router.navigate(['/']);
+    this.router.navigate(['/'], { queryParamsHandling: 'merge' });
   }
 }

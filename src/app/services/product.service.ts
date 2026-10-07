@@ -1,11 +1,16 @@
-import { Injectable } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { map, Observable, of } from 'rxjs';
 import { Product } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductService {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private products: Product[] = [
     {
       id: '1',
@@ -143,5 +148,74 @@ export class ProductService {
 
   getProducts(): Product[] {
     return this.products;
+  }
+
+  getProductByName(name: string): Observable<Product | undefined> {
+    const normalizedName = name.trim().toLowerCase();
+    const foundProduct = this.products.find(
+      (p) => p.name.trim().toLowerCase() === normalizedName,
+    );
+    return of(foundProduct);
+  }
+
+  getProductById(id: string): Product | undefined {
+    return this.products.find((p) => p.id === id);
+  }
+
+  // Dicionário de conversão: Chave do HTML -> Tag do Banco de Dados
+  private readonly tagMap: Record<string, string> = {
+    lactoseFree: 'sem-lactose',
+    glutenFree: 'sem-gluten',
+    vegan: 'vegano',
+  };
+
+  readonly activeFilters = toSignal(
+    this.route.queryParams.pipe(
+      map((params) => {
+        const tagsParam = params['tags'];
+        return tagsParam ? tagsParam.split(',').filter(Boolean) : [];
+      }),
+    ),
+    { initialValue: [] },
+  );
+
+  readonly filteredProducts = computed(() => {
+    const selectedKeys = this.activeFilters();
+    if (selectedKeys.length === 0) {
+      return this.products;
+    }
+
+    return this.products.filter((product) =>
+      selectedKeys.every((filterKey: any) => {
+        // Converte a chave (ex: 'lactoseFree') para a tag do banco (ex: 'sem-lactose')
+        const targetDbTag = this.tagMap[filterKey] || filterKey;
+        return product.tags?.includes(targetDbTag);
+      }),
+    );
+  });
+
+  toggleTagFilter(filterKey: string): void {
+    const currentFilters = [...this.activeFilters()];
+    const index = currentFilters.indexOf(filterKey);
+
+    if (index > -1) {
+      currentFilters.splice(index, 1);
+    } else {
+      currentFilters.push(filterKey);
+    }
+
+    const tagsParam =
+      currentFilters.length > 0 ? currentFilters.join(',') : null;
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tags: tagsParam },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  isTagActive(filterKey: string): boolean {
+    return this.activeFilters().includes(filterKey);
   }
 }

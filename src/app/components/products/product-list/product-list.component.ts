@@ -1,5 +1,5 @@
 import { NgFor } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Product } from '../../../models/product.model';
 import { ProductService } from '../../../services/product.service';
 import { CartNavigationComponent } from '../../cart/cart-navigation/cart-navigation.component';
@@ -14,54 +14,28 @@ import { ProductCardComponent } from '../product-card/product-card.component';
 })
 export class ProductListComponent implements OnInit {
   products: Product[] = [];
-  filteredProducts: Product[] = [];
-
-  filters = {
-    lactoseFree: false,
-    glutenFree: false,
-    vegan: false,
-  };
 
   selectedProduct: Product | null = null;
 
-  constructor(private productService: ProductService) {}
-
   ngOnInit(): void {
     this.products = this.productService.getProducts();
-    this.applyFilters();
   }
 
-  toggleFilter(filter: string) {
-    if (filter === 'lactoseFree') {
-      this.filters.lactoseFree = !this.filters.lactoseFree;
-    } else if (filter === 'glutenFree') {
-      this.filters.glutenFree = !this.filters.glutenFree;
-    } else if (filter === 'vegan') {
-      this.filters.vegan = !this.filters.vegan;
-    }
-    this.applyFilters();
+  readonly productService = inject(ProductService);
+
+  get filteredProducts(): Product[] {
+    return this.productService.filteredProducts();
   }
 
-  applyFilters() {
-    this.filteredProducts = this.products.filter((p) => {
-      const matchesLactose = this.filters.lactoseFree
-        ? p.tags.includes('sem-lactose')
-        : true;
-      const matchesGluten = this.filters.glutenFree
-        ? p.tags.includes('sem-gluten')
-        : true;
-      const matchesVegan = this.filters.vegan
-        ? p.tags.includes('vegano')
-        : true;
-      return matchesLactose && matchesGluten && matchesVegan;
-    });
+  get filters() {
+    return {
+      lactoseFree: this.productService.isTagActive('lactoseFree'),
+      glutenFree: this.productService.isTagActive('glutenFree'),
+      vegan: this.productService.isTagActive('vegan'),
+    };
   }
 
-  viewDetails(product: Product) {
-    this.selectedProduct = product;
-  }
-
-  closeDetails() {
-    this.selectedProduct = null;
+  toggleFilter(tag: string): void {
+    this.productService.toggleTagFilter(tag);
   }
 }
