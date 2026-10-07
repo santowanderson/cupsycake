@@ -162,7 +162,6 @@ export class ProductService {
     return this.products.find((p) => p.id === id);
   }
 
-  // Dicionário de conversão: Chave do HTML -> Tag do Banco de Dados
   private readonly tagMap: Record<string, string> = {
     lactoseFree: 'sem-lactose',
     glutenFree: 'sem-gluten',
@@ -187,7 +186,6 @@ export class ProductService {
 
     return this.products.filter((product) =>
       selectedKeys.every((filterKey: any) => {
-        // Converte a chave (ex: 'lactoseFree') para a tag do banco (ex: 'sem-lactose')
         const targetDbTag = this.tagMap[filterKey] || filterKey;
         return product.tags?.includes(targetDbTag);
       }),

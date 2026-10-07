@@ -1,0 +1,68 @@
+@if (modalService.isOpen() && modalService.selectedProduct(); as product) {
+  <div class="modal-backdrop" @backdropFade (click)="onBackdropClick($event)">
+    <div class="modal-card" @modalScale role="dialog" aria-modal="true">
+      <button
+        type="button"
+        class="close-button"
+        (click)="modalService.close()"
+        aria-label="Fechar modal"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-circle-x"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="m15 9-6 6" />
+          <path d="m9 9 6 6" />
+        </svg>
+      </button>
+
+      <div class="image-header">
+        <img [src]="product.image" [alt]="product.name" loading="lazy" />
+        <span class="category-badge">{{ product.category }}</span>
+      </div>
+
+      <div class="modal-content">
+        <header class="product-header">
+          <h2 class="product-title">{{ product.name }}</h2>
+          <span class="product-price">{{
+            product.price | currency: "BRL"
+          }}</span>
+        </header>
+
+        @if (product.tags && product.tags.length > 0) {
+          <div class="tags-container">
+            @for (tag of product.tags; track tag) {
+              <span class="tag-chip" [class]="tag">
+                {{ formatTagLabel(tag) }}
+              </span>
+            }
+          </div>
+        }
+
+        <p class="product-description">
+          {{ product.description }}
+        </p>
+
+        @if (product.ingredients && product.ingredients.length > 0) {
+          <section class="ingredients-section">
+            <h3>Ingredientes</h3>
+            <ul class="ingredients-list">
+              @for (ingredient of product.ingredients; track ingredient) {
+                <li>{{ ingredient }}</li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
+    </div>
+  </div>
+}

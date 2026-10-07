@@ -126,5 +126,9 @@ img {
   to { transform: translateY(0); opacity: 1; }
 }
 
+body.no-scroll {
+  overflow: hidden;
+}
+
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
