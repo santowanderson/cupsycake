@@ -16,23 +16,29 @@ export class ProductCardComponent {
   @Input() product!: Product;
   @Input() viewDetails?: (product: Product) => void;
 
-  // Injeção do serviço de modal e do serviço de carrinho
   private readonly cartService = inject(CartService);
   private readonly modalService = inject(ProductModalService);
 
   quantity: number = 0;
   isInCart: boolean = false;
+  isAdding: boolean = false;
 
   openModal(): void {
-    console.log('faslfsalkjfl');
     if (this.product) {
       this.modalService.open(this.product);
     }
   }
 
   addToCart(): void {
+    if (this.isAdding) return;
+
+    this.isAdding = true;
     this.quantity = 1;
     this.isInCart = true;
     this.cartService.addToCart(this.product);
+
+    setTimeout(() => {
+      this.isAdding = false;
+    }, 1500);
   }
 }

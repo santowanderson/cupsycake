@@ -5,8 +5,13 @@
   <div class="product-info">
     <h3>{{ product.name }}</h3>
     <p class="price">{{ product.price | currency: "BRL" }}</p>
-    <button class="btn-add" (click)="$event.stopPropagation(); addToCart()">
-      Adicionar ao Carrinho
+    <button
+      class="btn-add"
+      [class.added]="isAdding"
+      [disabled]="isAdding"
+      (click)="$event.stopPropagation(); addToCart()"
+    >
+      {{ isAdding ? "Adicionado ao carrinho" : "Adicionar ao Carrinho" }}
     </button>
   </div>
 </div>

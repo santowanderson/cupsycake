@@ -109,5 +109,14 @@
 }
 
 .image-container:hover img {
-  transform: scale(1.05); /* Efeito suave de zoom ao passar o mouse */
+  transform: scale(1.05);
+}
+
+.btn-add:disabled,
+.btn-add.added {
+  background-color: #2e7d32 !important;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.9;
+  transition: background-color 0.2s ease;
 }

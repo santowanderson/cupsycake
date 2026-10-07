@@ -29,7 +29,6 @@ interface StoredCart {
 export class CartService {
   private readonly STORAGE_KEY = 'shopping_cart_items';
 
-  // Define o tempo de vida do carrinho: 3 horas em milissegundos
   private readonly CART_TTL_MS = 3 * 60 * 60 * 1000;
 
   private readonly platformId = inject(PLATFORM_ID);
