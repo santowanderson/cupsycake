@@ -41,7 +41,7 @@ export class CartComponent implements OnInit {
     this.calculateTotal();
   }
 
-  goBack(): void {
-    window.history.back();
+  onContinueShopping(): void {
+    this.router.navigate(['/']);
   }
 }
