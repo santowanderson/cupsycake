@@ -12,3 +12,7 @@
 .header p {
   color: #666;
 }
+
+.header a {
+  text-decoration: none;
+}

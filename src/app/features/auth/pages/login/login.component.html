@@ -1,0 +1,117 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <header class="login-header">
+      <h2>Entrar na Conta</h2>
+      <p>Digite seus dados para acessar a plataforma</p>
+    </header>
+
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="onSubmit()"
+      class="login-form"
+      novalidate
+    >
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="seuemail@exemplo.com"
+          [class.invalid]="isSubmitted() && loginForm.controls.email.invalid"
+        />
+        @if (isSubmitted() && loginForm.controls.email.invalid) {
+          <span class="error-message">
+            @if (loginForm.controls.email.errors?.["required"]) {
+              O e-mail é obrigatório.
+            }
+            @if (loginForm.controls.email.errors?.["email"]) {
+              Digite um e-mail válido.
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <div class="input-wrapper">
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            placeholder="••••••••"
+            [class.invalid]="
+              isSubmitted() && loginForm.controls.password.invalid
+            "
+          />
+          <button
+            type="button"
+            class="toggle-password-btn"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="
+              showPassword() ? 'Esconder senha' : 'Mostrar senha'
+            "
+          >
+            @if (showPassword()) {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-eye-closed preview-icon"
+              >
+                <path d="m15 18-.722-3.25" />
+                <path d="M2 8a10.645 10.645 0 0 0 20 0" />
+                <path d="m20 15-1.726-2.05" />
+                <path d="m4 15 1.726-2.05" />
+                <path d="m9 18 .722-3.25" />
+              </svg>
+            } @else {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-eye preview-icon"
+              >
+                <path
+                  d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+                />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            }
+          </button>
+        </div>
+        @if (isSubmitted() && loginForm.controls.password.invalid) {
+          <span class="error-message">
+            @if (loginForm.controls.password.errors?.["required"]) {
+              A senha é obrigatória.
+            }
+            @if (loginForm.controls.password.errors?.["minlength"]) {
+              A senha deve conter pelo menos 6 caracteres.
+            }
+          </span>
+        }
+      </div>
+
+      <button type="submit" class="btn-login">Entrar</button>
+    </form>
+
+    <footer class="login-footer">
+      <p>
+        Não possui cadastro ainda?
+        <a routerLink="/register" class="register-link">Cadastre-se aqui</a>
+      </p>
+    </footer>
+  </div>
+</div>

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 
 import { RouterOutlet } from '@angular/router';
@@ -9,12 +8,7 @@ import { ProductService } from './services/product.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterOutlet,
-    HeaderComponent,
-    ProductDetailModalComponent,
-  ],
+  imports: [RouterOutlet, HeaderComponent, ProductDetailModalComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
