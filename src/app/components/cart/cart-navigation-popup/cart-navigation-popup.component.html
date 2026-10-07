@@ -1,0 +1,11 @@
+<div class="modal-overlay">
+  <div class="modal-content" [class.closing]="closing">
+    <p>Deseja ser direcionado ao carrinho?</p>
+    <div class="actions">
+      <button (click)="onConfirmNavigation()" class="btn-sim">Sim</button>
+      <button (click)="onDeclineNavigation()" class="btn-nao" #btnNao>
+        Não
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,30 @@
+<div class="container">
+  <section class="filters">
+    <button
+      (click)="toggleFilter('lactoseFree')"
+      [class.active]="filters.lactoseFree"
+    >
+      Sem Lactose
+    </button>
+    <button
+      (click)="toggleFilter('glutenFree')"
+      [class.active]="filters.glutenFree"
+    >
+      Sem Glúten
+    </button>
+    <button (click)="toggleFilter('vegan')" [class.active]="filters.vegan">
+      Vegano
+    </button>
+  </section>
+
+  <div class="product-grid">
+    <app-product-card
+      *ngFor="let product of filteredProducts"
+      [product]="product"
+      (click)="viewDetails(product)"
+    >
+    </app-product-card>
+  </div>
+
+  <app-cart-navigation />
+</div>

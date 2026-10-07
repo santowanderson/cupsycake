@@ -1,0 +1,12 @@
+<div class="product-card">
+  <div class="image-container">
+    <img [src]="product.image" [alt]="product.name" />
+  </div>
+  <div class="product-info">
+    <h3>{{ product.name }}</h3>
+    <p class="price">{{ product.price | currency: "BRL" }}</p>
+    <button class="btn-add" (click)="$event.stopPropagation(); addToCart()">
+      Adicionar ao Carrinho
+    </button>
+  </div>
+</div>
