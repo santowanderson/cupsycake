@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ProductService } from '../../services/product.service';
+import { CartService } from './cart.service';
 
 @Component({
   selector: 'app-cart',
@@ -16,28 +16,28 @@ export class CartComponent implements OnInit {
   totalPrice = 0;
 
   constructor(
-    private productService: ProductService,
+    private cartService: CartService,
     private router: Router,
   ) {}
 
   ngOnInit(): void {
-    this.cartItems = this.productService.getCart();
+    this.cartItems = this.cartService.getCart();
     this.calculateTotal();
   }
 
   calculateTotal(): void {
-    this.totalPrice = this.productService.getTotalPrice();
+    this.totalPrice = this.cartService.getTotalPrice();
   }
 
   removeItem(productId: string): void {
-    this.productService.removeFromCart(productId);
-    this.cartItems = this.productService.getCart();
+    this.cartService.removeFromCart(productId);
+    this.cartItems = this.cartService.getCart();
     this.calculateTotal();
   }
 
   updateQuantity(productId: string, delta: number): void {
-    this.productService.updateQuantity(productId, delta);
-    this.cartItems = this.productService.getCart();
+    this.cartService.updateQuantity(productId, delta);
+    this.cartItems = this.cartService.getCart();
     this.calculateTotal();
   }
 

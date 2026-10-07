@@ -2,7 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 
 import { Product } from '../../../models/product.model';
-import { ProductService } from '../../../services/product.service';
+import { CartService } from '../../../components/cart/cart.service';
 
 @Component({
   selector: 'app-product-card',
@@ -15,7 +15,7 @@ export class ProductCardComponent {
   @Input() product!: Product;
   @Input() viewDetails?: (product: Product) => void;
 
-  constructor(private productService: ProductService) {}
+  constructor(private cartService: CartService) {}
 
   quantity: number = 0;
   isInCart: boolean = false;
@@ -23,6 +23,6 @@ export class ProductCardComponent {
   addToCart() {
     this.quantity = 1;
     this.isInCart = true;
-    this.productService.addToCart(this.product);
+    this.cartService.addToCart(this.product);
   }
 }

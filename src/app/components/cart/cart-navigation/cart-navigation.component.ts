@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, Observable } from 'rxjs';
-import { ProductService } from '../../../services/product.service';
 import { CartNavigationPopupComponent } from '../cart-navigation-popup/cart-navigation-popup.component';
+import { CartService } from '../cart.service';
 
 @Component({
   selector: 'app-cart-navigation',
@@ -19,9 +19,9 @@ export class CartNavigationComponent {
 
   constructor(
     private router: Router,
-    private productService: ProductService,
+    private cartService: CartService,
   ) {
-    this.cartCount$ = this.productService.cartCount$;
+    this.cartCount$ = this.cartService.cartCount$;
     this.hasItems$ = this.cartCount$.pipe(map((count) => (count ?? 0) > 0));
   }
 
