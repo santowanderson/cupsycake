@@ -11,9 +11,11 @@
       class="register-form"
       novalidate
     >
+      <!-- SEÇÃO 1: DADOS PESSOAIS -->
       <h3 class="section-title">Dados Pessoais</h3>
 
       <div class="form-grid">
+        <!-- Nome -->
         <div class="form-group">
           <label for="nome">Nome</label>
           <input
@@ -29,6 +31,8 @@
             >
           }
         </div>
+
+        <!-- Sobrenome -->
         <div class="form-group">
           <label for="sobrenome">Sobrenome</label>
           <input
@@ -43,6 +47,28 @@
           }
         </div>
 
+        <!-- CPF (Novo Campo com Validação de Algoritmo) -->
+        <div class="form-group">
+          <label for="cpf">CPF</label>
+          <input
+            id="cpf"
+            type="text"
+            formControlName="cpf"
+            placeholder="000.000.000-00"
+            [class.invalid]="isFieldInvalid('cpf')"
+          />
+          @if (isFieldInvalid("cpf")) {
+            <span class="error-message">
+              @if (registerForm.get("cpf")?.hasError("required")) {
+                CPF é obrigatório.
+              } @else if (registerForm.get("cpf")?.hasError("invalidCpf")) {
+                CPF inválido. Verifique os dígitos.
+              }
+            </span>
+          }
+        </div>
+
+        <!-- E-mail (Validação Estrita) -->
         <div class="form-group">
           <label for="email">E-mail</label>
           <input
@@ -53,10 +79,17 @@
             [class.invalid]="isFieldInvalid('email')"
           />
           @if (isFieldInvalid("email")) {
-            <span class="error-message">Informe um e-mail válido</span>
+            <span class="error-message">
+              @if (registerForm.get("email")?.hasError("required")) {
+                E-mail é obrigatório.
+              } @else if (registerForm.get("email")?.hasError("invalidEmail")) {
+                Informe um e-mail válido (exemplo&#64;dominio.com).
+              }
+            </span>
           }
         </div>
 
+        <!-- Telefone -->
         <div class="form-group">
           <label for="telefone">Telefone</label>
           <input
@@ -71,6 +104,7 @@
           }
         </div>
 
+        <!-- Sexo -->
         <div class="form-group">
           <label for="sexo">Sexo</label>
           <select
@@ -89,6 +123,7 @@
           }
         </div>
 
+        <!-- Idade -->
         <div class="form-group">
           <label for="idade">Idade</label>
           <input
@@ -101,10 +136,13 @@
             [class.invalid]="isFieldInvalid('idade')"
           />
           @if (isFieldInvalid("idade")) {
-            <span class="error-message">Idade válida obrigatória</span>
+            <span class="error-message"
+              >Idade válida obrigatória (12 a 120 anos)</span
+            >
           }
         </div>
 
+        <!-- Senha com Lista de Requisitos de Segurança -->
         <div class="form-group span-2">
           <label for="senha">Senha</label>
           <div class="input-wrapper">
@@ -112,7 +150,7 @@
               [type]="showPassword ? 'text' : 'password'"
               id="senha"
               formControlName="senha"
-              placeholder="Digite sua senha"
+              placeholder="Crie uma senha forte"
               [class.invalid]="isFieldInvalid('senha')"
             />
             <button
@@ -154,17 +192,71 @@
               }
             </button>
           </div>
+
+          <!-- Feedback dinâmico de Requisitos da Senha -->
           @if (isFieldInvalid("senha")) {
-            <span class="error-message"
-              >A senha deve ter no mínimo 6 caracteres</span
-            >
+            @if (registerForm.get("senha")?.hasError("required")) {
+              <span class="error-message">Senha é obrigatória.</span>
+            } @else if (
+              registerForm.get("senha")?.hasError("passwordStrength")
+            ) {
+              <div class="password-requirements">
+                <p class="error-message">
+                  A senha precisa atender aos seguintes requisitos:
+                </p>
+                <ul class="requirements-list">
+                  <li
+                    [class.met]="
+                      !registerForm.get('senha')?.errors?.['passwordStrength']
+                        ?.hasMinLength
+                    "
+                  >
+                    Pelo menos 8 caracteres
+                  </li>
+                  <li
+                    [class.met]="
+                      !registerForm.get('senha')?.errors?.['passwordStrength']
+                        ?.hasUpperCase
+                    "
+                  >
+                    Pelo menos 1 letra maiúscula
+                  </li>
+                  <li
+                    [class.met]="
+                      !registerForm.get('senha')?.errors?.['passwordStrength']
+                        ?.hasLowerCase
+                    "
+                  >
+                    Pelo menos 1 letra minúscula
+                  </li>
+                  <li
+                    [class.met]="
+                      !registerForm.get('senha')?.errors?.['passwordStrength']
+                        ?.hasNumeric
+                    "
+                  >
+                    Pelo menos 1 número
+                  </li>
+                  <li
+                    [class.met]="
+                      !registerForm.get('senha')?.errors?.['passwordStrength']
+                        ?.hasSpecialChar
+                    "
+                  >
+                    Pelo menos 1 caractere especial (!&#64;#$%^&*)
+                  </li>
+                </ul>
+              </div>
+            }
           }
         </div>
       </div>
 
+      <!-- SEÇÃO 2: ENDEREÇO -->
       <h3 class="section-title">Endereço</h3>
 
       <div formGroupName="endereco" class="form-grid">
+        <!-- CEP -->
         <div class="form-group">
           <label for="cep">CEP</label>
           <input
@@ -175,10 +267,13 @@
             [class.invalid]="isFieldInvalid('cep', 'endereco')"
           />
           @if (isFieldInvalid("cep", "endereco")) {
-            <span class="error-message">CEP inválido</span>
+            <span class="error-message"
+              >CEP é obrigatório (Formato: 00000-000)</span
+            >
           }
         </div>
 
+        <!-- Estado / UF -->
         <div class="form-group">
           <label for="estado">Estado (UF)</label>
           <select
@@ -192,13 +287,13 @@
             <option value="MG">MG - Minas Gerais</option>
             <option value="RS">RS - Rio Grande do Sul</option>
             <option value="PR">PR - Paraná</option>
-            <!-- Adicione outros estados conforme necessário -->
           </select>
           @if (isFieldInvalid("estado", "endereco")) {
             <span class="error-message">Selecione o estado</span>
           }
         </div>
 
+        <!-- Rua e Número -->
         <div class="span-2 street-grid">
           <div class="form-group">
             <label for="logradouro">Logradouro / Rua</label>
@@ -229,6 +324,7 @@
           </div>
         </div>
 
+        <!-- Bairro -->
         <div class="form-group">
           <label for="bairro">Bairro</label>
           <input
@@ -243,6 +339,7 @@
           }
         </div>
 
+        <!-- Cidade -->
         <div class="form-group">
           <label for="cidade">Cidade</label>
           <input
@@ -257,6 +354,7 @@
           }
         </div>
 
+        <!-- Complemento -->
         <div class="form-group span-2">
           <label for="complemento">Complemento (opcional)</label>
           <input
@@ -268,12 +366,14 @@
         </div>
       </div>
 
+      <!-- Botão de Envio -->
       <button type="submit" class="btn-register">Concluir Cadastro</button>
 
+      <!-- Footer com Navegação SPA -->
       <div class="register-footer">
         <p>
           Já possui uma conta?
-          <a routerLink="/register" class="login-link">Faça Login</a>
+          <a routerLink="/login" class="login-link">Faça Login</a>
         </p>
       </div>
     </form>
