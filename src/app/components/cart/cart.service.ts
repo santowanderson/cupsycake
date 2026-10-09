@@ -11,7 +11,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Observable } from 'rxjs';
 import { Product } from '../../models/product.model';
-import { ProductService } from '../../services/product.service';
+import { ProductService } from '../products/product.service';
 
 export interface CartItem {
   product: Product;

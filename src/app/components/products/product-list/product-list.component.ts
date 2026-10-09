@@ -1,9 +1,10 @@
 import { NgFor } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { Product } from '../../../models/product.model';
-import { ProductService } from '../../../services/product.service';
+
 import { CartNavigationComponent } from '../../cart/cart-navigation/cart-navigation.component';
 import { ProductCardComponent } from '../product-card/product-card.component';
+import { ProductService } from '../product.service';
 
 @Component({
   selector: 'app-product-list',

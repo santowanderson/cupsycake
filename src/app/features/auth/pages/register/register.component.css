@@ -1,4 +1,3 @@
-/* Reset & Base */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,7 +5,6 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Fundo total da página */
 .register-wrapper {
   min-height: 100vh;
   display: flex;
@@ -16,7 +14,6 @@
   padding: 2.5rem 1rem;
 }
 
-/* Container do Formulário (Card Branco Expandido) */
 .register-card {
   width: 100%;
   max-width: 680px;
@@ -26,7 +23,6 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
-/* Cabeçalho */
 .register-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -44,7 +40,6 @@
   font-size: 0.95rem;
 }
 
-/* Form e Grids */
 .register-form {
   display: flex;
   flex-direction: column;
@@ -76,7 +71,6 @@
   gap: 1rem;
 }
 
-/* Form Group e Labels */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -89,7 +83,6 @@
   color: #333333;
 }
 
-/* Estilo Base para Inputs e Selects */
 .form-group input,
 .form-group select {
   width: 100%;
@@ -123,7 +116,6 @@
   border-color: #dc2626;
 }
 
-/* Campo de Senha */
 .input-wrapper {
   position: relative;
   display: flex;
@@ -165,7 +157,6 @@
   margin-top: 0.1rem;
 }
 
-/* Botão Principal */
 .btn-register {
   width: 100%;
   padding: 0.9rem 1.5rem;
@@ -190,7 +181,6 @@
   transform: scale(0.98);
 }
 
-/* Rodapé com Link */
 .register-footer {
   margin-top: 1rem;
   text-align: center;
@@ -208,7 +198,6 @@
   text-decoration: underline;
 }
 
-/* Responsividade para Dispositivos Móveis */
 @media (max-width: 640px) {
   .register-card {
     padding: 1.75rem 1.25rem;
