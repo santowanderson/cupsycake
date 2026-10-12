@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { getUserOrders } from '../controllers/order.controller';
-import { authenticateToken } from '../middlewares/auth.middleware';
+import { OrderController } from '../controllers/order.controller';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
+const controller = new OrderController();
 
-router.get('/my-orders', authenticateToken, getUserOrders);
+router.get('/', authMiddleware, controller.getUserOrders);
 
 export default router;

@@ -1,31 +1,32 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  // Rotas de Autenticação (Prefixo 'auth', resultando em /auth/login e /auth/register)
   {
-    path: '',
-    loadComponent: () =>
-      import('./components/products/product-list/product-list.component').then(
-        (m) => m.ProductListComponent,
-      ),
+    path: 'auth',
+    loadChildren: () =>
+      import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./features/auth/pages/login/login.component').then(
-        (m) => m.LoginComponent,
-      ),
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./features/auth/pages/register/register.component').then(
-        (m) => m.RegisterComponent,
-      ),
-  },
+
+  // Rota do Carrinho (Protegida)
   {
     path: 'cart',
-    loadComponent: () =>
-      import('./components/cart/cart.component').then((m) => m.CartComponent),
+    loadChildren: () =>
+      import('./features/cart/cart.routes').then((m) => m.CART_ROUTES),
   },
-  { path: '**', redirectTo: '' },
+
+  // Rotas de Produtos / Catálogo (Devem vir por último por utilizarem path: '')
+  {
+    path: '',
+    loadChildren: () =>
+      import('./features/products/products.routes').then(
+        (m) => m.PRODUCT_ROUTES,
+      ),
+  },
+
+  // Rota curinga para redirecionar caminhos inválidos à home
+  {
+    path: '**',
+    redirectTo: '',
+  },
 ];

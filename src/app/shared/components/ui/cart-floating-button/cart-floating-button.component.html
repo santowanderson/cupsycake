@@ -1,0 +1,55 @@
+<!-- Botão Flutuante (FAB) - Visível apenas quando houver 1 ou mais itens -->
+@if (cartService.isCartVisible()) {
+  <button
+    class="fab-cart"
+    (click)="openModal()"
+    aria-label="Abrir carrinho de compras"
+  >
+    <!-- Ícone de Carrinho (SVG) -->
+    <svg
+      class="cart-icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="9" cy="21" r="1"></circle>
+      <circle cx="20" cy="21" r="1"></circle>
+      <path
+        d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
+      ></path>
+    </svg>
+
+    <!-- Badge de Quantidade -->
+    @if (itemCount() > 0) {
+      <span class="badge">{{ itemCount() }}</span>
+    }
+  </button>
+}
+
+<!-- Pop-up de Confirmação -->
+@if (isModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <p class="modal-message">Deseja ser direcionado ao carrinho?</p>
+
+      <div class="modal-actions">
+        <!-- Botão "Sim" -->
+        <button class="btn-yes" (click)="confirmNavigation()">Sim</button>
+
+        <!-- Botão "Não" -->
+        <button
+          #noButton
+          class="btn-no"
+          (click)="closeModal()"
+          (keydown)="onKeyDown($event)"
+        >
+          Não
+        </button>
+      </div>
+    </div>
+  </div>
+}

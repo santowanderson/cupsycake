@@ -20,15 +20,3 @@ export interface Tag {
   id?: number;
   name: TagName;
 }
-
-export interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  ingredients?: string;
-  price: number;
-  imageUrl?: string;
-  tags: TagName[];
-  createdOn?: string;
-  updatedOn?: string;
-}

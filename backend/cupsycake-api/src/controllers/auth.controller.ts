@@ -1,88 +1,42 @@
-import bcrypt from 'bcrypt';
-import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { ResultSetHeader, RowDataPacket } from 'mysql2';
-import { dbPool } from '../config/database';
+import { NextFunction, Request, Response } from 'express';
+import { loginSchema, registerSchema } from '../schemas/auth.schema';
+import { AuthService } from '../services/auth.service';
 
-export const register = async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
+export class AuthController {
+  private authService = new AuthService();
 
-  if (!name || !email || !password) {
-    return res
-      .status(400)
-      .json({ message: 'Please fill in all required fields.' });
-  }
-
-  try {
-    const [existingUsers] = await dbPool.query<RowDataPacket[]>(
-      'SELECT id FROM users WHERE email = ?',
-      [email],
-    );
-
-    if (existingUsers.length > 0) {
-      return res.status(409).json({ message: 'Email is already registered.' });
+  register = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const validatedData = registerSchema.parse(req.body);
+      const result = await this.authService.register(validatedData);
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
     }
+  };
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const [result] = await dbPool.query<ResultSetHeader>(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-      [name, email, hashedPassword],
-    );
-
-    return res.status(201).json({
-      message: 'User registered successfully!',
-      userId: result.insertId,
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    return res.status(500).json({ message: 'Internal server error.' });
-  }
-};
-
-export const login = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res
-      .status(400)
-      .json({ message: 'Email and password are required.' });
-  }
-
-  try {
-    const [users] = await dbPool.query<RowDataPacket[]>(
-      'SELECT * FROM users WHERE email = ?',
-      [email],
-    );
-
-    if (users.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+  login = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const result = await this.authService.login(validatedData);
+      res.status(200).json(result);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'Invalid email or password'
+      ) {
+        res.status(401).json({ message: error.message });
+        return;
+      }
+      next(error);
     }
-
-    const user = users[0];
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '8h' },
-    );
-
-    return res.json({
-      message: 'Login successful!',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({ message: 'Internal server error.' });
-  }
-};
+  };
+}

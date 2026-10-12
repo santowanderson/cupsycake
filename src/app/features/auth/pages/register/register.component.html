@@ -366,8 +366,20 @@
         </div>
       </div>
 
+      @if (errorMessage()) {
+        <div class="alert-error" role="alert">
+          {{ errorMessage() }}
+        </div>
+      }
+
       <!-- Botão de Envio -->
-      <button type="submit" class="btn-register">Concluir Cadastro</button>
+      <button type="submit" [disabled]="isLoading()" class="btn-register">
+        @if (isLoading()) {
+          <span>Cadastrando...</span>
+        } @else {
+          <span>Concluir Cadastro</span>
+        }
+      </button>
 
       <!-- Footer com Navegação SPA -->
       <div class="register-footer">

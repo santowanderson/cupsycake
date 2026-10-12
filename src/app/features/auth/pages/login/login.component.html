@@ -11,6 +11,11 @@
       class="login-form"
       novalidate
     >
+      @if (errorMessage()) {
+        <div class="alert-error" role="alert">
+          {{ errorMessage() }}
+        </div>
+      }
       <!-- Campo de E-mail -->
       <div class="form-group">
         <label for="email">E-mail</label>
@@ -102,9 +107,18 @@
       <div class="login-footer">
         <p>
           Ainda não tem conta?
-          <a routerLink="/register" class="register-link">Cadastre-se aqui</a>
+          <a routerLink="/auth/register" class="register-link"
+            >Cadastre-se aqui</a
+          >
         </p>
       </div>
     </form>
   </div>
 </div>
+
+<!-- Insira no final do template do login -->
+<app-auth-error-modal
+  [isOpen]="isModalOpen()"
+  [errorMessage]="modalMessage()"
+  (closed)="isModalOpen.set(false)"
+/>

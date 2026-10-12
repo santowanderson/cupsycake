@@ -1,31 +1,30 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { CustomJwtPayload } from '../types';
 
-export interface AuthenticatedRequest extends Request {
-  userId?: number;
-}
-
-export const authenticateToken = (
-  req: AuthenticatedRequest,
+export const authMiddleware = (
+  req: Request,
   res: Response,
   next: NextFunction,
-) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+): void => {
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: 'Access denied. Token not provided.' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ message: 'Access denied. No token provided.' });
+    return;
   }
 
+  const token = authHeader.split(' ')[1];
+
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret') as {
-      id: number;
-    };
-    req.userId = payload.id;
+    const secret = process.env.JWT_SECRET || 'secret';
+
+    // O double cast (as unknown as CustomJwtPayload) resolve o aviso do TypeScript
+    const decoded = jwt.verify(token, secret) as unknown as CustomJwtPayload;
+
+    req.user = decoded;
     next();
-  } catch (err) {
-    return res.status(403).json({ message: 'Invalid or expired token.' });
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid or expired token.' });
   }
 };

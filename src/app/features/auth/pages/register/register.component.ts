@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 import { CustomValidators } from '../../../../shared/validators/custom-validators';
 
 @Component({
@@ -18,6 +19,12 @@ import { CustomValidators } from '../../../../shared/validators/custom-validator
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private authService = inject(AuthService);
+
+  // Estados reativos com Signals para controle de UI
+  protected isLoading = signal<boolean>(false);
+  protected errorMessage = signal<string | null>(null);
 
   showPassword = false;
 
@@ -54,11 +61,8 @@ export class RegisterComponent {
     this.showPassword = !this.showPassword;
   }
 
-  // MÉTODOS ACESSÍVEIS PELO TEMPLATE HTML:
-
   /**
    * Verifica se um campo do formulário está inválido e já foi modificado/tocado pelo usuário.
-   * Suporta campos raiz e campos de grupos aninhados (ex: endereco.cep).
    */
   isFieldInvalid(fieldName: string, groupName?: string): boolean {
     const control = groupName
@@ -69,19 +73,54 @@ export class RegisterComponent {
   }
 
   onSubmit(): void {
-    if (this.registerForm.valid) {
-      const rawValues = this.registerForm.value;
-
-      const payload = {
-        ...rawValues,
-        cpf: rawValues.cpf.replace(/\D/g, ''),
-        email: rawValues.email.trim().toLowerCase(),
-        telefone: rawValues.telefone.replace(/\D/g, ''),
-      };
-
-      console.log('Dados do Cadastro Limpos e Válidos:', payload);
-    } else {
+    if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
+      return;
     }
+
+    // Reseta erros anteriores e ativa o estado de carregamento
+    this.errorMessage.set(null);
+    this.isLoading.set(true);
+
+    const rawValues = this.registerForm.value;
+
+    // Sanitização de dados e mapeamento para o padrão esperado pelo AuthService (RegisterRequest)
+    const registerPayload = {
+      name: `${rawValues.nome.trim()} ${rawValues.sobrenome.trim()}`,
+      email: rawValues.email.trim().toLowerCase(),
+      password: rawValues.senha, // Mapeado de 'senha' para 'password'
+      cpf: rawValues.cpf.replace(/\D/g, ''),
+      telefone: rawValues.telefone.replace(/\D/g, ''),
+      sexo: rawValues.sexo,
+      idade: rawValues.idade,
+      endereco: rawValues.endereco,
+    };
+
+    // Comunicação com o backend através do AuthService
+    this.authService.register(registerPayload).subscribe({
+      next: () => {
+        // O AuthService já gerencia a sessão salvando o token automaticamente.
+        // Redirecionamos o usuário para a página inicial da aplicação logado.
+        this.router.navigate(['/']);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        console.error('Falha ao registrar usuário:', err);
+
+        // Tratamento amigável de erros retornados pela API
+        if (err.status === 400 || err.status === 409) {
+          this.errorMessage.set(
+            'Este e-mail já está cadastrado ou os dados informados são inválidos.',
+          );
+        } else {
+          this.errorMessage.set(
+            'Não foi possível conectar ao servidor. Tente novamente mais tarde.',
+          );
+        }
+      },
+      complete: () => {
+        this.isLoading.set(false);
+      },
+    });
   }
 }
