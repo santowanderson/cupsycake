@@ -1,30 +1,23 @@
-// src/app/app.component.ts
-import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-
-import { CartService } from './core/services/cart.service';
+import { FooterComponent } from './layout/footer/footer.component';
 import { HeaderComponent } from './layout/header/header.component';
-
 import { ProductModalComponent } from './shared/components/product-modal/product-modal.component';
-import { CartFloatingButtonComponent } from './shared/components/ui/cart-floating-button/cart-floating-button.component';
-import { FooterComponent } from './shared/components/ui/footer/footer.component';
+import { FloatingCartButtonComponent } from './shared/components/ui/floating-cart-button/floating-cart-button.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterOutlet,
-    HeaderComponent,
-    ProductModalComponent,
-    CartFloatingButtonComponent,
     FooterComponent,
+    HeaderComponent,
+    RouterOutlet,
+    ProductModalComponent,
+    FloatingCartButtonComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
 export class AppComponent {
-  protected cartService = inject(CartService);
-  title = 'Cupcake Delight Store';
+  title = 'cupsycake-frontend';
 }

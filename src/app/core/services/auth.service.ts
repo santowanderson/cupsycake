@@ -1,100 +1,57 @@
-// src/app/core/services/auth.service.ts
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-// Interface estruturada para o Endereço correspondente ao FormGroup
-export interface EnderecoRequest {
-  cep: string;
-  logradouro: string;
-  numero: string;
-  complemento?: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
-}
-
-// Interface RegisterRequest expandida com todos os campos do formulário
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  cpf: string;
-  telefone: string;
-  sexo: string;
-  idade: number;
-  endereco: EnderecoRequest;
-}
-
-export interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
+import { Observable, switchMap, tap } from 'rxjs';
+import { UserProfile } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly apiUrl = 'http://localhost:3000/api/auth';
 
-  private readonly TOKEN_KEY = 'access_token';
+  readonly currentUser = signal<UserProfile | null>(null);
+  readonly isAuthenticated = computed(() => !!this.currentUser());
 
-  // Signal privado para gerenciar o token reativamente
-  private tokenSignal = signal<string | null>(
-    localStorage.getItem(this.TOKEN_KEY),
-  );
-
-  // Método público que valida se o usuário está autenticado
-  isAuthenticated(): boolean {
-    return !!this.tokenSignal();
+  login(credentials: { email: string; password: string }): Observable<any> {
+    return this.http
+      .post(`${this.apiUrl}/login`, credentials, { withCredentials: true })
+      .pipe(switchMap(() => this.loadProfile()));
   }
 
-  private readonly API_URL = 'http://localhost:3000/api/auth';
+  register(userData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/register`, userData);
+  }
 
-  login(credentials: LoginRequest): Observable<AuthResponse> {
+  logout(): Observable<any> {
     return this.http
-      .post<AuthResponse>(`${this.API_URL}/login`, credentials)
+      .post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
       .pipe(
-        tap((response) => {
-          this.setSession(response.token);
+        tap(() => {
+          this.currentUser.set(null);
+          const currentUrl = this.router.url;
+          if (currentUrl.includes('/cart') || currentUrl.includes('/orders')) {
+            this.router.navigate(['/']);
+          } else {
+            this.router.navigate(['/auth/login']);
+          }
         }),
       );
   }
 
-  register(userData: RegisterRequest): Observable<AuthResponse> {
+  loadProfile(): Observable<UserProfile> {
     return this.http
-      .post<AuthResponse>(`${this.API_URL}/register`, userData)
-      .pipe(
-        tap((response) => {
-          this.setSession(response.token);
-        }),
-      );
+      .get<UserProfile>(`${this.apiUrl}/profile`, { withCredentials: true })
+      .pipe(tap((profile) => this.currentUser.set(profile)));
   }
 
-  logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    this.tokenSignal.set(null);
-    this.router.navigate(['/auth/login']);
-  }
-
-  getToken(): string | null {
-    return this.tokenSignal();
-  }
-
-  private setSession(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
-    this.tokenSignal.set(token);
+  validateAuthAndRedirect(returnUrl: string = '/cart'): boolean {
+    if (this.isAuthenticated()) {
+      return true;
+    }
+    this.router.navigate(['/auth/login'], { queryParams: { returnUrl } });
+    return false;
   }
 }

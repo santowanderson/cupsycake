@@ -1,30 +1,31 @@
 import { Routes } from '@angular/router';
 
+import { authGuard } from './core/guards/auth.guard';
+
 export const routes: Routes = [
-  // Rotas de Autenticação (Prefixo 'auth', resultando em /auth/login e /auth/register)
   {
     path: 'auth',
     loadChildren: () =>
       import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
-
-  // Rota do Carrinho (Protegida)
   {
     path: 'cart',
     loadChildren: () =>
       import('./features/cart/cart.routes').then((m) => m.CART_ROUTES),
   },
-
-  // Rotas de Produtos / Catálogo (Devem vir por último por utilizarem path: '')
+  {
+    path: 'orders',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/orders/orders.routes').then((m) => m.ORDERS_ROUTES),
+  },
   {
     path: '',
     loadChildren: () =>
       import('./features/products/products.routes').then(
-        (m) => m.PRODUCT_ROUTES,
+        (m) => m.PRODUCTS_ROUTES,
       ),
   },
-
-  // Rota curinga para redirecionar caminhos inválidos à home
   {
     path: '**',
     redirectTo: '',

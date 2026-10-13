@@ -32,13 +32,12 @@ export class LoginComponent {
   // Estados reativos utilizando Signals
   protected isModalOpen = signal<boolean>(false);
   protected errorMessage = signal<string>('E-mail ou senha incorretos.');
-  // Alias para manter compatibilidade caso algum trecho utilize modalMessage
   protected modalMessage = this.errorMessage;
 
   protected isLoading = signal<boolean>(false);
   protected showPassword = false;
 
-  // Formulário de Login com as validações customizadas
+  // Formulário de Login com validações customizadas
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, CustomValidators.emailValidator()]],
     senha: ['', [Validators.required, CustomValidators.passwordValidator()]],
@@ -64,15 +63,17 @@ export class LoginComponent {
     this.isLoading.set(true);
     const { email, senha } = this.loginForm.value;
 
-    // Sanitização de dados antes do envio
+    // Sanitização e formatação para o padrão esperado pelo backend
     const credentials = {
       email: email.trim().toLowerCase(),
       password: senha,
     };
 
-    // Comunicação com o backend através do AuthService
+    // Comunicação com o backend através do AuthService integrado
     this.authService.login(credentials).subscribe({
       next: () => {
+        this.isLoading.set(false);
+        // Redireciona para a rota anterior (returnUrl) ou para a home por padrão
         const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
         this.router.navigate([returnUrl]);
       },
@@ -80,7 +81,7 @@ export class LoginComponent {
         this.isLoading.set(false);
         console.error('Falha na autenticação:', err);
 
-        // Define a mensagem de erro que será exibida no modal
+        // Tratamento de mensagens de erro amigáveis baseadas no status HTTP
         if (err.status === 401 || err.status === 404) {
           this.errorMessage.set(
             'E-mail ou senha inválidos. Verifique os dados informados ou cadastre-se.',
@@ -93,9 +94,6 @@ export class LoginComponent {
 
         // Abre o modal flutuante de erro
         this.isModalOpen.set(true);
-      },
-      complete: () => {
-        this.isLoading.set(false);
       },
     });
   }

@@ -1,86 +1,51 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, map, Observable, of } from 'rxjs';
-import { Product, Tag } from '../../../core/models/product.model';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Product } from '../../../core/models/product.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductService {
   private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-
   private readonly apiUrl = 'http://localhost:3000/api/products';
 
-  // Mapeia os filtros da URL para os slugs reais salvos na tabela `tags` do banco de dados
-  private readonly tagSlugMap: Record<string, string> = {
-    lactoseFree: 'lactose-free',
-    glutenFree: 'gluten-free',
-    vegan: 'vegan',
-  };
+  readonly products = signal<Product[]>([]);
+  readonly activeTagFilters = signal<string[]>([]);
 
-  // Requisição HTTP mapeando o payload do backend para a interface `Product` e `Tag`
-  private readonly products$ = this.http.get<any[]>(this.apiUrl).pipe(
-    map((data) =>
-      data.map(
-        (item): Product => ({
-          id: Number(item.id),
-          name: item.name,
-          slug: item.slug,
-          description: item.description || null,
-          ingredients: item.ingredients || null,
-          price: Number(item.price),
-          image_url: item.image_url || item.imageUrl || null,
-          stock_quantity: Number(item.stock_quantity ?? 0),
-          is_active: Boolean(item.is_active ?? true),
-          tags: Array.isArray(item.tags)
-            ? item.tags.map((t: Tag) => ({
-                id: Number(t.id),
-                name: String(t.name),
-                slug: String(t.slug),
-              }))
-            : [],
-        }),
-      ),
-    ),
-    catchError((error) => {
-      console.error('Erro ao buscar produtos da API:', error);
-      return of([]);
-    }),
-  );
+  constructor() {
+    this.fetchProducts();
+  }
 
-  // Estado reativo global dos produtos utilizando Signals do Angular 17
-  readonly productsSignal = toSignal(this.products$, { initialValue: [] });
+  fetchProducts(): void {
+    this.http.get<Product[]>(this.apiUrl).subscribe({
+      next: (data) => this.products.set(data),
+      error: (err) => console.error('Erro ao carregar produtos:', err),
+    });
+  }
 
-  // Captura reativa dos parâmetros de query string para filtros (ex: ?tags=glutenFree)
-  readonly activeFilters = toSignal(
-    this.route.queryParams.pipe(
-      map((params) => {
-        const tagsParam = params['tags'];
-        return tagsParam ? tagsParam.split(',').filter(Boolean) : [];
-      }),
-    ),
-    { initialValue: [] },
-  );
+  toggleTagFilter(tagSlug: string): void {
+    this.activeTagFilters.update((filters) => {
+      if (filters.includes(tagSlug)) {
+        return filters.filter((f) => f !== tagSlug);
+      }
+      return [...filters, tagSlug];
+    });
+  }
 
-  // Computação reativa para filtrar a listagem de cupcakes instantaneamente
+  isTagActive(tagSlug: string): boolean {
+    return this.activeTagFilters().includes(tagSlug);
+  }
+
   readonly filteredProducts = computed(() => {
-    const products = this.productsSignal();
-    const selectedKeys = this.activeFilters();
+    const list = this.products();
+    const filters = this.activeTagFilters();
 
-    if (selectedKeys.length === 0) {
-      return products;
-    }
+    if (filters.length === 0) return list;
 
-    return products.filter((product) =>
-      selectedKeys.every((filterKey: string) => {
-        const targetSlug = this.tagSlugMap[filterKey] || filterKey;
-        // Verifica se o array de tags do produto possui o slug correspondente
-        return product.tags?.some((tag) => tag.slug === targetSlug);
-      }),
+    return list.filter((product) =>
+      filters.every((filterSlug) =>
+        product.tags.some((t) => t.slug === filterSlug),
+      ),
     );
   });
 
@@ -107,46 +72,5 @@ export class ProductService {
     }
 
     return `assets/images/${productOrSlug.slug}.jpg`;
-  }
-
-  getProducts(): Product[] {
-    return this.productsSignal();
-  }
-
-  getProductById(id: number): Product | undefined {
-    return this.productsSignal().find((p) => p.id === Number(id));
-  }
-
-  getProductByName(name: string): Observable<Product | undefined> {
-    const normalizedName = name.trim().toLowerCase();
-    const foundProduct = this.productsSignal().find(
-      (p) => p.name.trim().toLowerCase() === normalizedName,
-    );
-    return of(foundProduct);
-  }
-
-  toggleTagFilter(filterKey: string): void {
-    const currentFilters = [...this.activeFilters()];
-    const index = currentFilters.indexOf(filterKey);
-
-    if (index > -1) {
-      currentFilters.splice(index, 1);
-    } else {
-      currentFilters.push(filterKey);
-    }
-
-    const tagsParam =
-      currentFilters.length > 0 ? currentFilters.join(',') : null;
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tags: tagsParam },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-  }
-
-  isTagActive(filterKey: string): boolean {
-    return this.activeFilters().includes(filterKey);
   }
 }

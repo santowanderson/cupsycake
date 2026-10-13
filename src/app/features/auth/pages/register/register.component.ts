@@ -29,8 +29,8 @@ export class RegisterComponent {
   showPassword = false;
 
   registerForm: FormGroup = this.fb.group({
-    nome: ['', [Validators.required, Validators.minLength(2)]],
-    sobrenome: ['', [Validators.required, Validators.minLength(2)]],
+    first_name: ['', [Validators.required, Validators.minLength(2)]],
+    last_name: ['', [Validators.required, Validators.minLength(2)]],
     cpf: ['', [Validators.required, CustomValidators.cpfValidator()]],
     email: ['', [Validators.required, CustomValidators.emailValidator()]],
     telefone: [
@@ -40,17 +40,20 @@ export class RegisterComponent {
         Validators.pattern(/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/),
       ],
     ],
-    sexo: ['', [Validators.required]],
-    idade: ['', [Validators.required, Validators.min(12), Validators.max(120)]],
-    senha: ['', [Validators.required, CustomValidators.passwordValidator()]],
-    endereco: this.fb.group({
-      cep: ['', [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]],
-      logradouro: ['', [Validators.required]],
-      numero: ['', [Validators.required]],
-      complemento: [''],
-      bairro: ['', [Validators.required]],
-      cidade: ['', [Validators.required]],
-      estado: [
+    gender: ['NOT_SPECIFIED', [Validators.required]],
+    birth_date: ['', [Validators.required]], // Mapeado para bater com o banco (substitui idade estática)
+    password: ['', [Validators.required, CustomValidators.passwordValidator()]],
+    address: this.fb.group({
+      zip_code: [
+        '',
+        [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)],
+      ],
+      street_address: ['', [Validators.required]],
+      number: ['', [Validators.required]],
+      complement: [''],
+      neighborhood: ['', [Validators.required]],
+      city: ['', [Validators.required]],
+      state_code: [
         '',
         [Validators.required, Validators.minLength(2), Validators.maxLength(2)],
       ],
@@ -61,9 +64,6 @@ export class RegisterComponent {
     this.showPassword = !this.showPassword;
   }
 
-  /**
-   * Verifica se um campo do formulário está inválido e já foi modificado/tocado pelo usuário.
-   */
   isFieldInvalid(fieldName: string, groupName?: string): boolean {
     const control = groupName
       ? this.registerForm.get(`${groupName}.${fieldName}`)
@@ -72,45 +72,78 @@ export class RegisterComponent {
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
+  // Mapeador auxiliar de estados do Brasil para preencher o state_name exigido pelo banco
+  private getStateName(uf: string): string {
+    const states: Record<string, string> = {
+      SP: 'São Paulo',
+      RJ: 'Rio de Janeiro',
+      MG: 'Minas Gerais',
+      ES: 'Espírito Santo',
+      PR: 'Paraná',
+      SC: 'Santa Catarina',
+      RS: 'Rio Grande do Sul',
+      BA: 'Bahia',
+      // Adicione outros estados conforme necessário ou utilize a sigla como fallback
+    };
+    return states[uf.toUpperCase()] || uf.toUpperCase();
+  }
+
   onSubmit(): void {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
 
-    // Reseta erros anteriores e ativa o estado de carregamento
     this.errorMessage.set(null);
     this.isLoading.set(true);
 
-    const rawValues = this.registerForm.value;
+    const raw = this.registerForm.value;
+    const cleanPhone = raw.telefone.replace(/\D/g, '');
+    const areaCode = cleanPhone.substring(0, 2);
+    const phoneNumber = cleanPhone.substring(2);
+    const stateCode = raw.address.state_code.toUpperCase();
 
-    // Sanitização de dados e mapeamento para o padrão esperado pelo AuthService (RegisterRequest)
+    // Montagem do payload alinhado exatamente ao backend Node.js / MySQL
     const registerPayload = {
-      name: `${rawValues.nome.trim()} ${rawValues.sobrenome.trim()}`,
-      email: rawValues.email.trim().toLowerCase(),
-      password: rawValues.senha, // Mapeado de 'senha' para 'password'
-      cpf: rawValues.cpf.replace(/\D/g, ''),
-      telefone: rawValues.telefone.replace(/\D/g, ''),
-      sexo: rawValues.sexo,
-      idade: rawValues.idade,
-      endereco: rawValues.endereco,
+      first_name: raw.first_name.trim(),
+      last_name: raw.last_name.trim(),
+      cpf: raw.cpf.replace(/\D/g, ''),
+      email: raw.email.trim().toLowerCase(),
+      area_code: areaCode,
+      phone_number: phoneNumber,
+      gender: raw.gender,
+      birth_date: raw.birth_date,
+      password: raw.password,
+      address: {
+        zip_code: raw.address.zip_code.replace(/\D/g, ''),
+        street_address: raw.address.street_address.trim(),
+        number: raw.address.number.trim(),
+        complement: raw.address.complement
+          ? raw.address.complement.trim()
+          : null,
+        neighborhood: raw.address.neighborhood.trim(),
+        city: raw.address.city.trim(),
+        state_code: stateCode,
+        state_name: this.getStateName(stateCode),
+      },
     };
 
-    // Comunicação com o backend através do AuthService
     this.authService.register(registerPayload).subscribe({
       next: () => {
-        // O AuthService já gerencia a sessão salvando o token automaticamente.
-        // Redirecionamos o usuário para a página inicial da aplicação logado.
-        this.router.navigate(['/']);
+        this.isLoading.set(false);
+        // Redireciona para o login após cadastro bem-sucedido
+        this.router.navigate(['/auth/login'], {
+          queryParams: { registered: 'true' },
+        });
       },
       error: (err) => {
         this.isLoading.set(false);
         console.error('Falha ao registrar usuário:', err);
 
-        // Tratamento amigável de erros retornados pela API
         if (err.status === 400 || err.status === 409) {
           this.errorMessage.set(
-            'Este e-mail já está cadastrado ou os dados informados são inválidos.',
+            err.error?.error ||
+              'Este e-mail ou CPF já está cadastrado no sistema.',
           );
         } else {
           this.errorMessage.set(

@@ -1,16 +1,12 @@
 <div class="app-layout">
-  <!-- Cabeçalho da Loja -->
   <app-header />
 
-  <!-- Container Principal onde as páginas (Catálogo, Carrinho, etc.) são renderizadas -->
   <main class="app-main">
     <router-outlet />
     <app-product-modal />
   </main>
 
-  <!-- Rodapé da Aplicação -->
   <app-footer />
 
-  <!-- Botão Flutuante e Popup de Navegação do Carrinho -->
-  <app-cart-floating-button />
+  <app-floating-cart-button />
 </div>

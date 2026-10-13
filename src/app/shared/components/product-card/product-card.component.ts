@@ -19,8 +19,7 @@ export class ProductCardComponent {
 
   private readonly cartService = inject(CartService);
   private readonly productService = inject(ProductService);
-  private readonly productModalService = inject(ProductModalService); // Injeção do service
-
+  private readonly productModalService = inject(ProductModalService);
   isAdding: boolean = false;
 
   get imageUrl(): string {

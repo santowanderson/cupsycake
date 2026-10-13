@@ -1,184 +1,123 @@
 <div class="cart-container">
-  <main class="cart-content">
-    @if (cartService.items().length > 0) {
-      <!-- Listagem de Produtos -->
-      <section class="cart-products" aria-label="Itens do carrinho">
-        <div class="cart-products-header">
-          <span class="status-all">
-            Todos os produtos ({{ cartService.totalItemsCount() }})
-          </span>
+  <h2>Seu Carrinho de Cupcakes</h2>
+
+  @if (cartItems().length > 0) {
+    <div class="cart-layout">
+      <!-- Lista de Itens -->
+      <div class="cart-items-list">
+        @for (item of cartItems(); track item.product.id) {
+          <div class="cart-item-card">
+            <img
+              [src]="item.product.image_url"
+              [alt]="item.product.name"
+              class="item-image"
+            />
+
+            <div class="item-details">
+              <h3>{{ item.product.name }}</h3>
+              <span class="item-price">
+                R$ {{ formatPrice(item.product.price) }} un.
+              </span>
+            </div>
+
+            <!-- Controles de Quantidade -->
+            <div class="quantity-controls">
+              <button
+                class="qty-btn"
+                (click)="updateQuantity(item.product.id, -1)"
+                aria-label="Diminuir quantidade"
+              >
+                -
+              </button>
+
+              <span class="qty-value" aria-label="Quantidade atual">
+                {{ item.quantity }}
+              </span>
+
+              <button
+                class="qty-btn"
+                (click)="updateQuantity(item.product.id, 1)"
+                aria-label="Aumentar quantidade"
+              >
+                +
+              </button>
+            </div>
+
+            <!-- Subtotal do item corrigido chamando o método da classe -->
+            <div class="item-subtotal">
+              <span>
+                R$ {{ getItemTotal(item.product.price, item.quantity) }}
+              </span>
+            </div>
+
+            <button
+              class="remove-btn"
+              (click)="removeItem(item.product.id)"
+              title="Remover item"
+            >
+              &times;
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Resumo do Pedido / Checkout -->
+      <div class="cart-summary">
+        <h3>Resumo do Pedido</h3>
+
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>R$ {{ formatPrice(subtotal()) }}</span>
         </div>
 
-        <div class="product-list">
-          @for (item of cartService.items(); track item.product.id) {
-            <article class="cart-item">
-              <div class="item-left">
-                <img
-                  [src]="
-                    item.product.image_url ||
-                    'assets/images/default-cupcake.png'
-                  "
-                  [alt]="item.product.name"
-                  class="item-image"
-                  loading="lazy"
-                />
-                <div class="item-details">
-                  <div class="item-header">
-                    <button
-                      class="trash-btn"
-                      (click)="removeItem(item.product.id)"
-                      [attr.aria-label]="
-                        'Remover ' + item.product.name + ' do carrinho'
-                      "
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="trash-icon"
-                      >
-                        <path d="M10 11v6" />
-                        <path d="M14 11v6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                        <path d="M3 6h18" />
-                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
-                    <h4 class="item-name">{{ item.product.name }}</h4>
-                  </div>
-
-                  <div class="item-quantity">
-                    <button
-                      class="qty-btn"
-                      [disabled]="item.quantity <= 1"
-                      (click)="
-                        updateQuantity(item.product.id, item.quantity - 1)
-                      "
-                      aria-label="Diminuir quantidade"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M8 12h8" />
-                      </svg>
-                    </button>
-
-                    <span class="qty-count">{{ item.quantity }}</span>
-
-                    <button
-                      class="qty-btn"
-                      (click)="
-                        updateQuantity(item.product.id, item.quantity + 1)
-                      "
-                      aria-label="Aumentar quantidade"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M8 12h8" />
-                        <path d="M12 8v8" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="item-right">
-                <div class="item-price-info">
-                  <span class="item-current-price">
-                    {{
-                      item.product.price * item.quantity
-                        | currency: "BRL" : "symbol" : "1.2-2"
-                    }}
-                  </span>
-                </div>
-              </div>
-            </article>
-          }
+        <div class="summary-row">
+          <span>Taxa de Entrega</span>
+          <span>R$ {{ formatPrice(shippingFee()) }}</span>
         </div>
-      </section>
 
-      <!-- Resumo do Pedido -->
-      <aside class="cart-summary" aria-label="Resumo do pedido">
-        <h3>Resumo da compra</h3>
-        <div class="summary-item">
-          <span>Produtos</span>
-          <span>{{
-            cartService.totalPrice() | currency: "BRL" : "symbol" : "1.2-2"
-          }}</span>
-        </div>
-        <div class="summary-item">
-          <span>Desconto</span>
-          <span class="discount"
-            >- {{ 0 | currency: "BRL" : "symbol" : "1.2-2" }}</span
-          >
-        </div>
-        <div class="summary-item">
-          <span>Frete</span>
-          <span class="free-shipping">Grátis</span>
-        </div>
-        <hr class="summary-divider" />
-        <div class="summary-total">
+        <div class="summary-divider"></div>
+
+        <div class="summary-row total">
           <span>Total</span>
-          <span>{{
-            cartService.totalPrice() | currency: "BRL" : "symbol" : "1.2-2"
-          }}</span>
+          <span>R$ {{ formatPrice(totalAmount()) }}</span>
         </div>
-        <button class="btn-confirm" (click)="onCheckout()">
-          Confirmar Pedido
-        </button>
-      </aside>
-    } @else {
-      <!-- Estado Alternativo: Carrinho Vazio -->
-      <div class="cart-empty-state">
-        <div class="empty-icon-wrapper">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="56"
-            height="56"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+
+        <div class="notes-group">
+          <label for="notes">Observações de Entrega (Opcional)</label>
+          <textarea
+            id="notes"
+            [(ngModel)]="deliveryNotes"
+            placeholder="Ex: Tocar campainha ao chegar, deixar na portaria..."
+            rows="3"
           >
-            <circle cx="9" cy="21" r="1"></circle>
-            <circle cx="20" cy="21" r="1"></circle>
-            <path
-              d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-            ></path>
-          </svg>
+          </textarea>
         </div>
-        <p>Seu carrinho de cupcakes está vazio no momento.</p>
-        <button class="btn-primary" (click)="onContinueShopping()">
-          Ver Catálogo de Cupcakes
+
+        @if (errorMessage()) {
+          <div class="error-alert">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <button
+          class="checkout-btn"
+          [disabled]="isSubmitting()"
+          (click)="checkout()"
+        >
+          @if (isSubmitting()) {
+            Processando...
+          } @else {
+            Finalizar Pedido
+          }
         </button>
       </div>
-    }
-  </main>
+    </div>
+  } @else {
+    <!-- Estado Vazio do Carrinho -->
+    <div class="empty-cart">
+      <div class="empty-icon">🛒</div>
+      <p>Seu carrinho está vazio.</p>
+      <a routerLink="/" class="shop-now-btn">Escolher Cupcakes</a>
+    </div>
+  }
 </div>

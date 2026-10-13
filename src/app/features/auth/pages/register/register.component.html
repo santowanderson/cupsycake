@@ -17,15 +17,15 @@
       <div class="form-grid">
         <!-- Nome -->
         <div class="form-group">
-          <label for="nome">Nome</label>
+          <label for="first_name">Nome</label>
           <input
-            id="nome"
+            id="first_name"
             type="text"
-            formControlName="nome"
+            formControlName="first_name"
             placeholder="Seu nome"
-            [class.invalid]="isFieldInvalid('nome')"
+            [class.invalid]="isFieldInvalid('first_name')"
           />
-          @if (isFieldInvalid("nome")) {
+          @if (isFieldInvalid("first_name")) {
             <span class="error-message"
               >Nome é obrigatório (mín. 2 letras)</span
             >
@@ -34,20 +34,20 @@
 
         <!-- Sobrenome -->
         <div class="form-group">
-          <label for="sobrenome">Sobrenome</label>
+          <label for="last_name">Sobrenome</label>
           <input
-            id="sobrenome"
+            id="last_name"
             type="text"
-            formControlName="sobrenome"
+            formControlName="last_name"
             placeholder="Seu sobrenome"
-            [class.invalid]="isFieldInvalid('sobrenome')"
+            [class.invalid]="isFieldInvalid('last_name')"
           />
-          @if (isFieldInvalid("sobrenome")) {
+          @if (isFieldInvalid("last_name")) {
             <span class="error-message">Sobrenome é obrigatório</span>
           }
         </div>
 
-        <!-- CPF (Novo Campo com Validação de Algoritmo) -->
+        <!-- CPF -->
         <div class="form-group">
           <label for="cpf">CPF</label>
           <input
@@ -68,7 +68,7 @@
           }
         </div>
 
-        <!-- E-mail (Validação Estrita) -->
+        <!-- E-mail -->
         <div class="form-group">
           <label for="email">E-mail</label>
           <input
@@ -104,54 +104,49 @@
           }
         </div>
 
-        <!-- Sexo -->
+        <!-- Gênero (Mapeado para o ENUM do MySQL) -->
         <div class="form-group">
-          <label for="sexo">Sexo</label>
+          <label for="gender">Gênero</label>
           <select
-            id="sexo"
-            formControlName="sexo"
-            [class.invalid]="isFieldInvalid('sexo')"
+            id="gender"
+            formControlName="gender"
+            [class.invalid]="isFieldInvalid('gender')"
           >
             <option value="" disabled selected>Selecione...</option>
-            <option value="masculino">Masculino</option>
-            <option value="feminino">Feminino</option>
-            <option value="outro">Outro</option>
-            <option value="nao_informar">Preferir não informar</option>
+            <option value="MALE">Masculino</option>
+            <option value="FEMALE">Feminino</option>
+            <option value="OTHER">Outro</option>
+            <option value="NOT_SPECIFIED">Preferir não informar</option>
           </select>
-          @if (isFieldInvalid("sexo")) {
+          @if (isFieldInvalid("gender")) {
             <span class="error-message">Selecione uma opção</span>
           }
         </div>
 
-        <!-- Idade -->
+        <!-- Data de Nascimento (Substitui idade estática para cálculo dinâmico) -->
         <div class="form-group">
-          <label for="idade">Idade</label>
+          <label for="birth_date">Data de Nascimento</label>
           <input
-            id="idade"
-            type="number"
-            formControlName="idade"
-            placeholder="Ex: 25"
-            min="12"
-            max="120"
-            [class.invalid]="isFieldInvalid('idade')"
+            id="birth_date"
+            type="date"
+            formControlName="birth_date"
+            [class.invalid]="isFieldInvalid('birth_date')"
           />
-          @if (isFieldInvalid("idade")) {
-            <span class="error-message"
-              >Idade válida obrigatória (12 a 120 anos)</span
-            >
+          @if (isFieldInvalid("birth_date")) {
+            <span class="error-message">Data de nascimento obrigatória</span>
           }
         </div>
 
         <!-- Senha com Lista de Requisitos de Segurança -->
         <div class="form-group span-2">
-          <label for="senha">Senha</label>
+          <label for="password">Senha</label>
           <div class="input-wrapper">
             <input
               [type]="showPassword ? 'text' : 'password'"
-              id="senha"
-              formControlName="senha"
+              id="password"
+              formControlName="password"
               placeholder="Crie uma senha forte"
-              [class.invalid]="isFieldInvalid('senha')"
+              [class.invalid]="isFieldInvalid('password')"
             />
             <button
               type="button"
@@ -194,11 +189,11 @@
           </div>
 
           <!-- Feedback dinâmico de Requisitos da Senha -->
-          @if (isFieldInvalid("senha")) {
-            @if (registerForm.get("senha")?.hasError("required")) {
+          @if (isFieldInvalid("password")) {
+            @if (registerForm.get("password")?.hasError("required")) {
               <span class="error-message">Senha é obrigatória.</span>
             } @else if (
-              registerForm.get("senha")?.hasError("passwordStrength")
+              registerForm.get("password")?.hasError("passwordStrength")
             ) {
               <div class="password-requirements">
                 <p class="error-message">
@@ -207,40 +202,45 @@
                 <ul class="requirements-list">
                   <li
                     [class.met]="
-                      !registerForm.get('senha')?.errors?.['passwordStrength']
-                        ?.hasMinLength
+                      !registerForm.get('password')?.errors?.[
+                        'passwordStrength'
+                      ]?.hasMinLength
                     "
                   >
                     Pelo menos 8 caracteres
                   </li>
                   <li
                     [class.met]="
-                      !registerForm.get('senha')?.errors?.['passwordStrength']
-                        ?.hasUpperCase
+                      !registerForm.get('password')?.errors?.[
+                        'passwordStrength'
+                      ]?.hasUpperCase
                     "
                   >
                     Pelo menos 1 letra maiúscula
                   </li>
                   <li
                     [class.met]="
-                      !registerForm.get('senha')?.errors?.['passwordStrength']
-                        ?.hasLowerCase
+                      !registerForm.get('password')?.errors?.[
+                        'passwordStrength'
+                      ]?.hasLowerCase
                     "
                   >
                     Pelo menos 1 letra minúscula
                   </li>
                   <li
                     [class.met]="
-                      !registerForm.get('senha')?.errors?.['passwordStrength']
-                        ?.hasNumeric
+                      !registerForm.get('password')?.errors?.[
+                        'passwordStrength'
+                      ]?.hasNumeric
                     "
                   >
                     Pelo menos 1 número
                   </li>
                   <li
                     [class.met]="
-                      !registerForm.get('senha')?.errors?.['passwordStrength']
-                        ?.hasSpecialChar
+                      !registerForm.get('password')?.errors?.[
+                        'passwordStrength'
+                      ]?.hasSpecialChar
                     "
                   >
                     Pelo menos 1 caractere especial (!&#64;#$%^&*)
@@ -255,31 +255,31 @@
       <!-- SEÇÃO 2: ENDEREÇO -->
       <h3 class="section-title">Endereço</h3>
 
-      <div formGroupName="endereco" class="form-grid">
-        <!-- CEP -->
+      <div formGroupName="address" class="form-grid">
+        <!-- CEP (zip_code) -->
         <div class="form-group">
-          <label for="cep">CEP</label>
+          <label for="zip_code">CEP</label>
           <input
-            id="cep"
+            id="zip_code"
             type="text"
-            formControlName="cep"
+            formControlName="zip_code"
             placeholder="00000-000"
-            [class.invalid]="isFieldInvalid('cep', 'endereco')"
+            [class.invalid]="isFieldInvalid('zip_code', 'address')"
           />
-          @if (isFieldInvalid("cep", "endereco")) {
+          @if (isFieldInvalid("zip_code", "address")) {
             <span class="error-message"
               >CEP é obrigatório (Formato: 00000-000)</span
             >
           }
         </div>
 
-        <!-- Estado / UF -->
+        <!-- Estado / UF (state_code) -->
         <div class="form-group">
-          <label for="estado">Estado (UF)</label>
+          <label for="state_code">Estado (UF)</label>
           <select
-            id="estado"
-            formControlName="estado"
-            [class.invalid]="isFieldInvalid('estado', 'endereco')"
+            id="state_code"
+            formControlName="state_code"
+            [class.invalid]="isFieldInvalid('state_code', 'address')"
           >
             <option value="" disabled selected>UF</option>
             <option value="SP">SP - São Paulo</option>
@@ -288,79 +288,79 @@
             <option value="RS">RS - Rio Grande do Sul</option>
             <option value="PR">PR - Paraná</option>
           </select>
-          @if (isFieldInvalid("estado", "endereco")) {
+          @if (isFieldInvalid("state_code", "address")) {
             <span class="error-message">Selecione o estado</span>
           }
         </div>
 
-        <!-- Rua e Número -->
+        <!-- Rua e Número (street_address e number) -->
         <div class="span-2 street-grid">
           <div class="form-group">
-            <label for="logradouro">Logradouro / Rua</label>
+            <label for="street_address">Logradouro / Rua</label>
             <input
-              id="logradouro"
+              id="street_address"
               type="text"
-              formControlName="logradouro"
+              formControlName="street_address"
               placeholder="Rua, Avenida, etc."
-              [class.invalid]="isFieldInvalid('logradouro', 'endereco')"
+              [class.invalid]="isFieldInvalid('street_address', 'address')"
             />
-            @if (isFieldInvalid("logradouro", "endereco")) {
+            @if (isFieldInvalid("street_address", "address")) {
               <span class="error-message">Rua é obrigatória</span>
             }
           </div>
 
           <div class="form-group">
-            <label for="numero">Número</label>
+            <label for="number">Número</label>
             <input
-              id="numero"
+              id="number"
               type="text"
-              formControlName="numero"
+              formControlName="number"
               placeholder="123"
-              [class.invalid]="isFieldInvalid('numero', 'endereco')"
+              [class.invalid]="isFieldInvalid('number', 'address')"
             />
-            @if (isFieldInvalid("numero", "endereco")) {
+            @if (isFieldInvalid("number", "address")) {
               <span class="error-message">Obrigatório</span>
             }
           </div>
         </div>
 
-        <!-- Bairro -->
+        <!-- Bairro (neighborhood) -->
         <div class="form-group">
-          <label for="bairro">Bairro</label>
+          <label for="neighborhood">Bairro</label>
           <input
-            id="bairro"
+            id="neighborhood"
             type="text"
-            formControlName="bairro"
+            formControlName="neighborhood"
             placeholder="Seu bairro"
-            [class.invalid]="isFieldInvalid('bairro', 'endereco')"
+            [class.invalid]="isFieldInvalid('neighborhood', 'address')"
           />
-          @if (isFieldInvalid("bairro", "endereco")) {
+          @if (isFieldInvalid("neighborhood", "address")) {
             <span class="error-message">Bairro é obrigatório</span>
           }
         </div>
 
-        <!-- Cidade -->
+        <!-- Cidade (city) -->
         <div class="form-group">
-          <label for="cidade">Cidade</label>
+          <label for="city">Cidade</label>
           <input
-            id="cidade"
+            id="city"
             type="text"
-            formControlName="cidade"
+            formControlName="city"
             placeholder="Sua cidade"
-            [class.invalid]="isFieldInvalid('cidade', 'endereco')"
+            [class.invalid]="isFieldInvalid('city', 'address')"
           />
-          @if (isFieldInvalid("cidade", "endereco")) {
+          @if (isFieldInvalid("city", "address")) {
             <span class="error-message">Cidade é obrigatória</span>
           }
         </div>
 
-        <!-- Complemento -->
+        <!-- Complemento (complement) -->
         <div class="form-group span-2">
-          <label for="complemento">Complemento (opcional)</label>
+          <label for="complement">Complemento (opcional)</label>
           <input
-            id="complemento"
+            id="complement"
             type="text"
-            formControlName="complemento"
+            formControlName="complement"
             placeholder="Apto, Bloco, Ponto de referência"
           />
         </div>
@@ -385,7 +385,7 @@
       <div class="register-footer">
         <p>
           Já possui uma conta?
-          <a routerLink="/login" class="login-link">Faça Login</a>
+          <a routerLink="/auth/login" class="login-link">Faça Login</a>
         </p>
       </div>
     </form>

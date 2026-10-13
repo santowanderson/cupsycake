@@ -21,7 +21,7 @@ export class ProductModalComponent {
     setTimeout(() => {
       this.modalService.close();
       this.isClosing = false;
-    }, 250); // Tempo sincronizado com a animação CSS
+    }, 250);
   }
 
   onBackdropClick(): void {
