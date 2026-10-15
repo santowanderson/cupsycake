@@ -8,7 +8,7 @@ import productRoutes from './routes/product.routes';
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configuração de Middlewares
@@ -28,9 +28,9 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // true se estiver em produção com HTTPS
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 1 dia de validade
+      maxAge: 24 * 60 * 60 * 1000,
     },
   }),
 );
@@ -44,6 +44,11 @@ app.get('/', (req, res) => {
   res.json({ message: 'API Cupsycake Auth operando perfeitamente!' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
+// Só inicia o servidor de fato se NÃO estiver rodando no ambiente de testes do Jest
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  });
+}
+
+export default app;
