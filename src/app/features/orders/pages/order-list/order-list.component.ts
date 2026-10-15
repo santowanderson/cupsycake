@@ -75,4 +75,11 @@ export class OrderListComponent implements OnInit {
     const num = Number(price);
     return isNaN(num) ? '0.00' : num.toFixed(2);
   }
+
+  imageUrl(id: number) {
+    const imagePath = this.productService
+      .products()
+      .find((item) => item.id === id)?.image_url;
+    return 'assets/images/' + imagePath;
+  }
 }

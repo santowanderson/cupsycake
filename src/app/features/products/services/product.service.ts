@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Product } from '../../../core/models/product.model';
 
 @Injectable({
@@ -49,28 +50,49 @@ export class ProductService {
     );
   });
 
-  getImageUrl(productOrSlug: Product | string | null | undefined): string {
-    if (!productOrSlug) {
+  getProducts(): Observable<Product[]> {
+    return this.http.get<Product[]>(this.apiUrl);
+  }
+
+  /**
+   * Função reutilizável que retorna o caminho completo da imagem do produto.
+   * Concatena o campo `image_url` do banco de dados com a pasta local `assets/images/`.
+   */
+  getImageUrl(productOrImage: Product | string | null | undefined): string {
+    if (!productOrImage) {
       return 'assets/images/placeholder.jpg';
     }
 
-    // Se receber apenas a string do slug
-    if (typeof productOrSlug === 'string') {
-      return productOrSlug.trim()
-        ? `assets/images/${productOrSlug}.jpg`
-        : 'assets/images/placeholder.jpg';
+    let rawValue = '';
+
+    if (typeof productOrImage === 'string') {
+      rawValue = productOrImage.trim();
+    } else if (productOrImage.image_url) {
+      rawValue = productOrImage.image_url.trim();
+    } else if (productOrImage.slug) {
+      rawValue = `${productOrImage.slug}.jpg`;
     }
 
-    // Se receber o objeto Product e ele já tiver uma imagem cadastrada
-    if (productOrSlug.image_url) {
-      return productOrSlug.image_url;
-    }
-
-    // Caso contrário, tenta montar com base no slug do produto
-    if (!productOrSlug.slug) {
+    if (!rawValue) {
       return 'assets/images/placeholder.jpg';
     }
 
-    return `assets/images/${productOrSlug.slug}.jpg`;
+    // Se já for uma URL completa (http/https) ou já começar com assets/
+    if (
+      rawValue.startsWith('http://') ||
+      rawValue.startsWith('https://') ||
+      rawValue.startsWith('assets/')
+    ) {
+      return rawValue;
+    }
+
+    // Remove qualquer barra inicial (ex: "/cupcake.jpg" ou " /cupcake.jpg") para evitar busca na raiz do servidor
+    const cleanName = rawValue.replace(/^\/+/, '');
+
+    if (cleanName.startsWith('assets/')) {
+      return cleanName;
+    }
+
+    return `assets/images/${cleanName}`;
   }
 }

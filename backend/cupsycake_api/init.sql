@@ -1,3 +1,11 @@
+sudo docker run --name cupsycake-mysql \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=cupsycake_db \
+  -p 3307:3306 \
+  -d mysql:8.0
+
+
+
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
 FLUSH PRIVILEGES;
 
@@ -88,6 +96,7 @@ CREATE TABLE IF NOT EXISTS `products` (
     `description` TEXT NULL,
     `ingredients` TEXT NULL,
     `price` DECIMAL(10, 2) UNSIGNED NOT NULL,
+    `image_url` VARCHAR(150) NOT NULL,
     `stock_quantity` INT UNSIGNED NOT NULL DEFAULT 0,
     `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

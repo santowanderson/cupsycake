@@ -46,8 +46,10 @@
             <div class="order-items">
               @for (item of order.items; track item.id) {
                 <div class="order-item-row">
+                  <!-- Imagem com fallback automático para 404 -->
                   <img
-                    [src]="productService.getImageUrl(item.slug)"
+                    #imgElement
+                    [src]="imageUrl(item.product_id)"
                     [alt]="item.product_name"
                     class="item-thumb"
                   />

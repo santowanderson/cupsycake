@@ -1,7 +1,8 @@
 <div class="product-card">
   <!-- Contêiner da imagem -->
   <div class="image-container" (click)="openModal()" role="button" tabindex="0">
-    <img [src]="imageUrl" [alt]="product.name" />
+    <!-- Utilizando a função reutilizável do ProductService passando o objeto product -->
+    <img [src]="productService.getImageUrl(product)" [alt]="product.name" />
 
     <!-- Tags flutuantes utilizando o getter normalizado -->
     @if (normalizedTags.length > 0) {

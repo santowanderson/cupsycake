@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CartService } from '../../../../core/services/cart.service';
 import { OrderService } from '../../../../core/services/order.service';
+import { ProductService } from '../../../products/services/product.service';
 
 @Component({
   selector: 'app-cart-detail',
@@ -17,6 +18,7 @@ export class CartDetailComponent {
   private readonly cartService = inject(CartService);
   private readonly orderService = inject(OrderService);
   private readonly authService = inject(AuthService);
+  protected readonly productService = inject(ProductService);
   private readonly router = inject(Router);
 
   // Exposição de estados do carrinho

@@ -18,13 +18,9 @@ export class ProductCardComponent {
   @Input({ required: true }) product!: Product;
 
   private readonly cartService = inject(CartService);
-  private readonly productService = inject(ProductService);
+  protected readonly productService = inject(ProductService);
   private readonly productModalService = inject(ProductModalService);
   isAdding: boolean = false;
-
-  get imageUrl(): string {
-    return this.productService.getImageUrl(this.product);
-  }
 
   openModal(): void {
     this.productModalService.open(this.product);

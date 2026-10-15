@@ -8,7 +8,7 @@
         @for (item of cartItems(); track item.product.id) {
           <div class="cart-item-card">
             <img
-              [src]="item.product.image_url"
+              [src]="productService.getImageUrl(item.product.image_url)"
               [alt]="item.product.name"
               class="item-image"
             />
