@@ -8,6 +8,7 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+  setupFiles: ['<rootDir>/tests/setup.ts'], // <-- Essencial para carregar o TextEncoder
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
