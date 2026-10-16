@@ -1,0 +1,241 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
+import { UserProfile } from '../models/user.model';
+import { AuthService } from './auth.service';
+
+describe('AuthService', () => {
+  let service: AuthService;
+  let httpMock: HttpTestingController;
+  let router: Router;
+
+  const mockUserProfile: UserProfile = {
+    customer_id: 1,
+    first_name: 'Wanderson',
+    last_name: 'Pereira',
+    email: 'wanderson@test.com',
+    cpf: '12345678909',
+    formatted_phone: '(11) 98765-4321',
+    gender: 'MALE',
+    birth_date: '2000-01-01',
+    age: 26,
+    zip_code: '06500000',
+    street_address: 'Rua Principal',
+    number: '100',
+    complement: 'Apto 101',
+    neighborhood: 'Centro',
+    city: 'São Paulo',
+    state_code: 'SP',
+    state_name: 'São Paulo',
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    });
+
+    service = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+    jest
+      .spyOn(router, 'navigate')
+      .mockImplementation(() => Promise.resolve(true));
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('should be created successfully with default unauthenticated state', () => {
+    expect(service).toBeTruthy();
+    expect(service.currentUser()).toBeNull();
+    expect(service.isAuthenticated()).toBe(false);
+  });
+
+  // ==========================================
+  // 1. TESTES DE LOGIN E CARREGAMENTO DE PERFIL (login / loadProfile)
+  // ==========================================
+  describe('Login & Profile Loading', () => {
+    it('should perform login POST request with credentials and automatically load user profile', () => {
+      const credentials = {
+        email: 'wanderson@test.com',
+        password: 'Password@123',
+      };
+      let profileResult: UserProfile | undefined;
+
+      service.login(credentials).subscribe((profile) => {
+        profileResult = profile;
+      });
+
+      // 1. Intercepta a requisição de login POST
+      const loginReq = httpMock.expectOne(
+        'http://localhost:3000/api/auth/login',
+      );
+      expect(loginReq.request.method).toBe('POST');
+      expect(loginReq.request.body).toEqual(credentials);
+      expect(loginReq.request.withCredentials).toBe(true);
+      loginReq.flush({ success: true });
+
+      // 2. O pipe switchMap aciona imediatamente o loadProfile GET
+      const profileReq = httpMock.expectOne(
+        'http://localhost:3000/api/auth/profile',
+      );
+      expect(profileReq.request.method).toBe('GET');
+      expect(profileReq.request.withCredentials).toBe(true);
+      profileReq.flush(mockUserProfile);
+
+      expect(profileResult).toEqual(mockUserProfile);
+      expect(service.currentUser()).toEqual(mockUserProfile);
+      expect(service.isAuthenticated()).toBe(true);
+    });
+
+    it('should load profile successfully and set currentUser and isAuthenticated signals', () => {
+      let result: UserProfile | undefined;
+
+      service.loadProfile().subscribe((profile) => {
+        result = profile;
+      });
+
+      const req = httpMock.expectOne('http://localhost:3000/api/auth/profile');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockUserProfile);
+
+      expect(result).toEqual(mockUserProfile);
+      expect(service.currentUser()).toEqual(mockUserProfile);
+      expect(service.isAuthenticated()).toBe(true);
+    });
+  });
+
+  // ==========================================
+  // 2. TESTES DE REGISTRO (register)
+  // ==========================================
+  describe('Register', () => {
+    it('should send POST request to register endpoint with user data', () => {
+      const userData = { first_name: 'Wanderson', email: 'wanderson@test.com' };
+      let response: any;
+
+      service.register(userData).subscribe((res) => {
+        response = res;
+      });
+
+      const req = httpMock.expectOne('http://localhost:3000/api/auth/register');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(userData);
+      req.flush({ success: true });
+
+      expect(response).toEqual({ success: true });
+    });
+  });
+
+  // ==========================================
+  // 3. TESTES DE LOGOUT E REDIRECIONAMENTO (logout)
+  // ==========================================
+  describe('Logout & Navigation', () => {
+    beforeEach(() => {
+      service.currentUser.set(mockUserProfile);
+      expect(service.isAuthenticated()).toBe(true);
+    });
+
+    it('should clear currentUser and navigate to home ("/") if currentUrl includes /cart', () => {
+      Object.defineProperty(router, 'url', {
+        get: () => '/cart/checkout',
+        configurable: true,
+      });
+      let response: any;
+
+      service.logout().subscribe((res) => {
+        response = res;
+      });
+
+      const req = httpMock.expectOne('http://localhost:3000/api/auth/logout');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush({ success: true });
+
+      expect(service.currentUser()).toBeNull();
+      expect(service.isAuthenticated()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
+      expect(response).toEqual({ success: true });
+    });
+
+    it('should clear currentUser and navigate to home ("/") if currentUrl includes /orders', () => {
+      Object.defineProperty(router, 'url', {
+        get: () => '/orders',
+        configurable: true,
+      });
+
+      service.logout().subscribe();
+
+      const req = httpMock.expectOne('http://localhost:3000/api/auth/logout');
+      req.flush({});
+
+      expect(service.currentUser()).toBeNull();
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
+    });
+
+    it('should clear currentUser and navigate to /auth/login for other standard routes', () => {
+      Object.defineProperty(router, 'url', {
+        get: () => '/profile',
+        configurable: true,
+      });
+
+      service.logout().subscribe();
+
+      const req = httpMock.expectOne('http://localhost:3000/api/auth/logout');
+      req.flush({});
+
+      expect(service.currentUser()).toBeNull();
+      expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
+    });
+  });
+
+  // ==========================================
+  // 4. TESTES DE VALIDAÇÃO DE ROTA PROTEGIDA (validateAuthAndRedirect)
+  // ==========================================
+  describe('validateAuthAndRedirect', () => {
+    it('should return true if user is authenticated', () => {
+      service.currentUser.set(mockUserProfile);
+      expect(service.isAuthenticated()).toBe(true);
+
+      const isValid = service.validateAuthAndRedirect('/cart');
+      expect(isValid).toBe(true);
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should return false and navigate to login with returnUrl queryParam if user is unauthenticated', () => {
+      expect(service.isAuthenticated()).toBe(false);
+
+      const isValid = service.validateAuthAndRedirect('/orders');
+      expect(isValid).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], {
+        queryParams: { returnUrl: '/orders' },
+      });
+    });
+
+    it('should use default returnUrl (/cart) if none is provided when unauthenticated', () => {
+      const isValid = service.validateAuthAndRedirect();
+      expect(isValid).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/auth/login'], {
+        queryParams: { returnUrl: '/cart' },
+      });
+    });
+  });
+});
