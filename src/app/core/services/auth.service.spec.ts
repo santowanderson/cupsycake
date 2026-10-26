@@ -107,7 +107,7 @@ describe('AuthService', () => {
     });
 
     it('should load profile successfully and set currentUser and isAuthenticated signals', () => {
-      let result: UserProfile | undefined;
+      let result: UserProfile | null | undefined;
 
       service.loadProfile().subscribe((profile) => {
         result = profile;
@@ -121,6 +121,25 @@ describe('AuthService', () => {
       expect(result).toEqual(mockUserProfile);
       expect(service.currentUser()).toEqual(mockUserProfile);
       expect(service.isAuthenticated()).toBe(true);
+    });
+
+    it('should handle 401 Unauthorized gracefully and set currentUser to null when loading profile fails', () => {
+      let result: UserProfile | null | undefined;
+
+      service.loadProfile().subscribe((profile) => {
+        result = profile;
+      });
+
+      const req = httpMock.expectOne('http://localhost:3000/api/auth/profile');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+
+      // Simula erro 401 retornado pelo servidor
+      req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+      expect(result).toBeNull();
+      expect(service.currentUser()).toBeNull();
+      expect(service.isAuthenticated()).toBe(false);
     });
   });
 

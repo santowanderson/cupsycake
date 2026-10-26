@@ -106,13 +106,20 @@ export const getProfile = async (
   try {
     const customerId = req.session.userId;
     if (!customerId) {
-      res.status(401).json({ error: 'Não autorizado.' });
+      // Retorna 200 OK com null para evitar disparar erro 401 no console do navegador
+      res.status(200).json(null);
       return;
     }
 
-    const profile = await UserModel.getProfileViewById(customerId);
+    const numericCustomerId = Number(customerId);
+    if (isNaN(numericCustomerId)) {
+      res.status(200).json(null);
+      return;
+    }
+
+    const profile = await UserModel.getProfileViewById(numericCustomerId);
     if (!profile) {
-      res.status(404).json({ error: 'Perfil não encontrado.' });
+      res.status(200).json(null);
       return;
     }
 
