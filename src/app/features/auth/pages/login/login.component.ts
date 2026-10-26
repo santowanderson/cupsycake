@@ -79,7 +79,13 @@ export class LoginComponent {
       },
       error: (err) => {
         this.isLoading.set(false);
-        console.error('Falha na autenticação:', err);
+
+        // REMovido o console.error genérico daqui.
+        // Erros 401/404 são regras de negócio esperadas (credenciais inválidas) e não devem sujar o console.
+        // Opcionalmente, mantemos o log apenas para falhas reais de servidor (ex: status 500).
+        if (err.status !== 401 && err.status !== 404) {
+          console.error('Erro crítico de infraestrutura:', err);
+        }
 
         // Tratamento de mensagens de erro amigáveis baseadas no status HTTP
         if (err.status === 401 || err.status === 404) {

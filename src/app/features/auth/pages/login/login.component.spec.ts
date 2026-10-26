@@ -128,7 +128,7 @@ describe('LoginComponent', () => {
   describe('Authentication Workflow (onSubmit)', () => {
     const fillValidForm = () => {
       component.loginForm.setValue({
-        email: '  WANDERSON@TEST.COM  ',
+        email: '   WANDERSON@TEST.COM  ',
         senha: 'Password@123',
       });
     };
@@ -167,7 +167,7 @@ describe('LoginComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/cart']);
     });
 
-    it('should handle 401/404 authentication error and open error modal with friendly message', () => {
+    it('should handle 401/404 authentication error and open error modal with friendly message without logging to console', () => {
       const consoleErrorSpy = jest
         .spyOn(console, 'error')
         .mockImplementation(() => {});
@@ -184,15 +184,14 @@ describe('LoginComponent', () => {
       expect(component['errorMessage']()).toBe(
         'E-mail ou senha inválidos. Verifique os dados informados ou cadastre-se.',
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Falha na autenticação:',
-        httpError,
-      );
+
+      // Valida que o console permaneceu completamente limpo para erros de negócio (401/404)
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
     });
 
-    it('should handle generic server error (500) and display connection error message in modal', () => {
+    it('should handle generic server error (500) and display connection error message in modal with infrastructure log', () => {
       const consoleErrorSpy = jest
         .spyOn(console, 'error')
         .mockImplementation(() => {});
@@ -209,8 +208,10 @@ describe('LoginComponent', () => {
       expect(component['errorMessage']()).toBe(
         'Não foi possível conectar ao servidor. Tente novamente mais tarde.',
       );
+
+      // Valida o log adequado para falhas reais de infraestrutura
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Falha na autenticação:',
+        'Erro crítico de infraestrutura:',
         httpError,
       );
 

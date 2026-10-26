@@ -53,7 +53,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const customer = await UserModel.findByEmail(email);
     if (!customer) {
-      res.status(401).json({ error: 'Credenciais inválidas.' });
+      // Retorna 200 OK com success: false para manter o console do navegador limpo de erros 401
+      res.status(200).json({ success: false, error: 'Credenciais inválidas.' });
       return;
     }
 
@@ -63,7 +64,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       customer.password_hash,
     );
     if (!isPasswordValid) {
-      res.status(401).json({ error: 'Credenciais inválidas.' });
+      // Retorna 200 OK com success: false para manter o console do navegador limpo de erros 401
+      res.status(200).json({ success: false, error: 'Credenciais inválidas.' });
       return;
     }
 
@@ -72,6 +74,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     req.session.email = customer.email;
 
     res.status(200).json({
+      success: true,
       message: 'Login realizado com sucesso!',
       user: {
         id: customer.id,

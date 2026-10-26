@@ -25,10 +25,20 @@ export class AuthService {
 
   login(credentials: { email: string; password: string }): Observable<any> {
     return this.http
-      .post(`${this.apiUrl}/login`, credentials, { withCredentials: true })
+      .post<any>(`${this.apiUrl}/login`, credentials, { withCredentials: true })
       .pipe(
-        tap(() => localStorage.setItem('has_active_session', 'true')),
-        switchMap(() => this.loadProfile()),
+        switchMap((response) => {
+          // Se o backend retornou success: false (credenciais inválidas), geramos um erro lógico controlado
+          // que não gera ruído nem logs de erro HTTP no console do navegador.
+          if (response && response.success === false) {
+            return throwError(() => ({
+              status: 401,
+              error: { error: response.error || 'Credenciais inválidas.' },
+            }));
+          }
+          localStorage.setItem('has_active_session', 'true');
+          return this.loadProfile();
+        }),
       );
   }
 
