@@ -17,8 +17,7 @@ export class AuthService {
   readonly isAuthenticated = computed(() => !!this.currentUser());
 
   constructor() {
-    // Só tenta buscar o perfil se houver indício prévio de sessão.
-    // Isso evita o disparo da requisição e o erro 401 para novos visitantes no console.
+    // Verificação opcional controlada por flag, sem disparar requisição fantasma nos testes unitários
     if (localStorage.getItem('has_active_session') === 'true') {
       this.loadProfile().subscribe();
     }

@@ -42,6 +42,9 @@ describe('AuthService', () => {
   };
 
   beforeEach(() => {
+    // Garante que o localStorage comece limpo para evitar chamadas automáticas indesejadas no construtor
+    localStorage.clear();
+
     TestBed.configureTestingModule({
       providers: [
         AuthService,
@@ -61,6 +64,7 @@ describe('AuthService', () => {
 
   afterEach(() => {
     httpMock.verify();
+    localStorage.clear();
   });
 
   it('should be created successfully with default unauthenticated state', () => {
@@ -104,6 +108,7 @@ describe('AuthService', () => {
       expect(profileResult).toEqual(mockUserProfile);
       expect(service.currentUser()).toEqual(mockUserProfile);
       expect(service.isAuthenticated()).toBe(true);
+      expect(localStorage.getItem('has_active_session')).toBe('true');
     });
 
     it('should load profile successfully and set currentUser and isAuthenticated signals', () => {
@@ -125,6 +130,7 @@ describe('AuthService', () => {
 
     it('should handle 401 Unauthorized gracefully and set currentUser to null when loading profile fails', () => {
       let result: UserProfile | null | undefined;
+      localStorage.setItem('has_active_session', 'true');
 
       service.loadProfile().subscribe((profile) => {
         result = profile;
@@ -140,6 +146,7 @@ describe('AuthService', () => {
       expect(result).toBeNull();
       expect(service.currentUser()).toBeNull();
       expect(service.isAuthenticated()).toBe(false);
+      expect(localStorage.getItem('has_active_session')).toBeNull();
     });
   });
 
@@ -170,6 +177,7 @@ describe('AuthService', () => {
   describe('Logout & Navigation', () => {
     beforeEach(() => {
       service.currentUser.set(mockUserProfile);
+      localStorage.setItem('has_active_session', 'true');
       expect(service.isAuthenticated()).toBe(true);
     });
 
@@ -191,6 +199,7 @@ describe('AuthService', () => {
 
       expect(service.currentUser()).toBeNull();
       expect(service.isAuthenticated()).toBe(false);
+      expect(localStorage.getItem('has_active_session')).toBeNull();
       expect(router.navigate).toHaveBeenCalledWith(['/']);
       expect(response).toEqual({ success: true });
     });
@@ -207,6 +216,7 @@ describe('AuthService', () => {
       req.flush({});
 
       expect(service.currentUser()).toBeNull();
+      expect(localStorage.getItem('has_active_session')).toBeNull();
       expect(router.navigate).toHaveBeenCalledWith(['/']);
     });
 
@@ -222,6 +232,7 @@ describe('AuthService', () => {
       req.flush({});
 
       expect(service.currentUser()).toBeNull();
+      expect(localStorage.getItem('has_active_session')).toBeNull();
       expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
     });
   });
