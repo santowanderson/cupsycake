@@ -160,3 +160,23 @@
     transform: translateY(0); 
   }
 }
+
+@media (max-width: 480px) {
+  .header {
+    padding: 1rem;
+    padding-top: 3.5rem; 
+  }
+
+  .auth-container {
+    top: 0.75rem;
+    right: 1rem;
+  }
+
+  .brand-link h1 {
+    font-size: 1.8rem;
+  }
+
+  .header p {
+    font-size: 0.85rem;
+  }
+}

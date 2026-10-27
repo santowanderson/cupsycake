@@ -30,6 +30,7 @@ body {
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
+  min-width: 375px;
 }
 
 button, input, select, textarea {
