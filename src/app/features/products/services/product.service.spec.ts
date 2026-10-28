@@ -4,6 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import {
   afterEach,
   beforeEach,
@@ -55,14 +56,13 @@ describe('ProductService', () => {
         ProductService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]), // Necessário para injetar Router e ActivatedRoute no serviço
       ],
     });
 
     service = TestBed.inject(ProductService);
     httpMock = TestBed.inject(HttpTestingController);
 
-    // O construtor do ProductService dispara fetchProducts() automaticamente.
-    // Capturamos e respondemos a essa requisição inicial padrão em cada teste.
     const initialRequest = httpMock.expectOne(
       'http://localhost:3000/api/products',
     );
@@ -70,7 +70,6 @@ describe('ProductService', () => {
   });
 
   afterEach(() => {
-    // Garante que não há requisições HTTP pendentes após cada teste
     httpMock.verify();
   });
 
@@ -83,7 +82,8 @@ describe('ProductService', () => {
   // ==========================================
   describe('HTTP Operations', () => {
     it('should fetch products successfully and update products signal', () => {
-      service.fetchProducts();
+      // Como o construtor chama o fetch automaticamente, limpamos ou testamos uma nova chamada
+      service['fetchProducts']();
 
       const req = httpMock.expectOne('http://localhost:3000/api/products');
       expect(req.request.method).toBe('GET');
@@ -97,7 +97,7 @@ describe('ProductService', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
-      service.fetchProducts();
+      service['fetchProducts']();
 
       const req = httpMock.expectOne('http://localhost:3000/api/products');
       req.error(new ProgressEvent('error'), {
@@ -111,20 +111,6 @@ describe('ProductService', () => {
       );
       consoleErrorSpy.mockRestore();
     });
-
-    it('should return products observable via getProducts()', () => {
-      let result: Product[] = [];
-
-      service.getProducts().subscribe((data) => {
-        result = data;
-      });
-
-      const req = httpMock.expectOne('http://localhost:3000/api/products');
-      expect(req.request.method).toBe('GET');
-      req.flush(mockProducts);
-
-      expect(result).toEqual(mockProducts);
-    });
   });
 
   // ==========================================
@@ -132,17 +118,20 @@ describe('ProductService', () => {
   // ==========================================
   describe('Tag Filtering & Reactive Signals', () => {
     beforeEach(() => {
-      // Seta produtos iniciais para testar o computed signal
       service['products'].set(mockProducts);
     });
 
-    it('should toggle tag filters correctly (add and remove slugs)', () => {
+    it('should toggle tag filters correctly (add and remove slugs) and reset page to 1', () => {
       expect(service.activeTagFilters()).toEqual([]);
 
-      // Adiciona tag
+      service.setPage(3);
+      expect(service.currentPage()).toBe(3);
+
+      // Adiciona tag (deve resetar a página para 1)
       service.toggleTagFilter('chocolate');
       expect(service.activeTagFilters()).toEqual(['chocolate']);
       expect(service.isTagActive('chocolate')).toBe(true);
+      expect(service.currentPage()).toBe(1);
 
       // Adiciona segunda tag
       service.toggleTagFilter('sem-gluten');
@@ -162,13 +151,12 @@ describe('ProductService', () => {
     it('should filter products correctly matching active tag filters', () => {
       service.toggleTagFilter('chocolate');
 
-      // Apenas o produto 1 possui a tag 'chocolate'
       expect(service.filteredProducts()).toEqual([mockProducts[0]]);
     });
 
     it('should return empty list if no product matches all active tag filters', () => {
       service.toggleTagFilter('chocolate');
-      service.toggleTagFilter('frutas'); // Nenhum produto possui ambas simultaneamente
+      service.toggleTagFilter('frutas');
 
       expect(service.filteredProducts()).toEqual([]);
     });
@@ -205,7 +193,7 @@ describe('ProductService', () => {
       expect(service.getImageUrl('/cupcake.jpg')).toBe(
         'assets/images/cupcake.jpg',
       );
-      expect(service.getImageUrl('   /gourmet.png   ')).toBe(
+      expect(service.getImageUrl('    /gourmet.png    ')).toBe(
         'assets/images/gourmet.png',
       );
       expect(service.getImageUrl('cupcake-vanilla.jpg')).toBe(

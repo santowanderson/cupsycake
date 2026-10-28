@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
 import { ProductService } from '../../services/product.service';
@@ -14,11 +14,10 @@ import { ProductService } from '../../services/product.service';
 export class ProductListComponent {
   protected readonly productService = inject(ProductService);
 
-  // Estado da Paginação
-  readonly currentPage = signal<number>(1);
   readonly itemsPerPage: number = 8; // 2 fileiras (4 itens por linha no desktop)
 
-  // Exposição direta do Signal computado de produtos filtrados do serviço
+  // Leitura direta do estado reativo do serviço
+  readonly currentPage = this.productService.currentPage;
   readonly filteredProducts = this.productService.filteredProducts;
 
   // Produtos exibidos apenas na página atual
@@ -52,13 +51,12 @@ export class ProductListComponent {
 
   toggleFilter(tag: string): void {
     this.productService.toggleTagFilter(tag);
-    this.currentPage.set(1); // Reseta para a primeira página sempre que o filtro mudar
   }
 
   changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // Retorna ao topo suavemente ao trocar de página
+      this.productService.setPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 }

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Product } from '../../../core/models/product.model';
 
 @Injectable({
@@ -8,29 +8,80 @@ import { Product } from '../../../core/models/product.model';
 })
 export class ProductService {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
   private readonly apiUrl = 'http://localhost:3000/api/products';
 
   readonly products = signal<Product[]>([]);
   readonly activeTagFilters = signal<string[]>([]);
+  readonly currentPage = signal<number>(1);
 
   constructor() {
     this.fetchProducts();
+    this.initQueryParamsSync();
   }
 
-  fetchProducts(): void {
+  private fetchProducts(): void {
     this.http.get<Product[]>(this.apiUrl).subscribe({
       next: (data) => this.products.set(data),
       error: (err) => console.error('Erro ao carregar produtos:', err),
     });
   }
 
+  /**
+   * Sincroniza o estado interno (tags e paginação) com os QueryParams da URL.
+   * Garante suporte a recarregamento de página e compartilhamento de URL.
+   */
+  private initQueryParamsSync(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      // Tratamento das Tags (aceita string única ou array no param 'tags')
+      const tagParam = params.getAll('tag');
+      this.activeTagFilters.set(tagParam);
+
+      // Tratamento da Página Atual
+      const pageParam = params.get('page');
+      const parsedPage = pageParam ? Number(pageParam) : 1;
+      this.currentPage.set(
+        !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1,
+      );
+    });
+  }
+
+  /**
+   * Atualiza os QueryParams na URL, refletindo o estado atual de filtros e página.
+   */
+  private updateQueryParams(): void {
+    const filters = this.activeTagFilters();
+    const page = this.currentPage();
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        tag: filters.length > 0 ? filters : null,
+        page: page > 1 ? page : null, // Oculta o param 'page=1' para manter a URL limpa
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
   toggleTagFilter(tagSlug: string): void {
     this.activeTagFilters.update((filters) => {
-      if (filters.includes(tagSlug)) {
-        return filters.filter((f) => f !== tagSlug);
-      }
-      return [...filters, tagSlug];
+      const updatedFilters = filters.includes(tagSlug)
+        ? filters.filter((f) => f !== tagSlug)
+        : [...filters, tagSlug];
+
+      return updatedFilters;
     });
+
+    // Sempre que o filtro mudar, resetamos para a primeira página e atualizamos a URL
+    this.currentPage.set(1);
+    this.updateQueryParams();
+  }
+
+  setPage(page: number): void {
+    this.currentPage.set(page);
+    this.updateQueryParams();
   }
 
   isTagActive(tagSlug: string): boolean {
@@ -50,13 +101,8 @@ export class ProductService {
     );
   });
 
-  getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(this.apiUrl);
-  }
-
   /**
    * Função reutilizável que retorna o caminho completo da imagem do produto.
-   * Concatena o campo `image_url` do banco de dados com a pasta local `assets/images/`.
    */
   getImageUrl(productOrImage: Product | string | null | undefined): string {
     if (!productOrImage) {
@@ -77,7 +123,6 @@ export class ProductService {
       return 'assets/images/placeholder.jpg';
     }
 
-    // Se já for uma URL completa (http/https) ou já começar com assets/
     if (
       rawValue.startsWith('http://') ||
       rawValue.startsWith('https://') ||
@@ -86,7 +131,6 @@ export class ProductService {
       return rawValue;
     }
 
-    // Remove qualquer barra inicial (ex: "/cupcake.jpg" ou " /cupcake.jpg") para evitar busca na raiz do servidor
     const cleanName = rawValue.replace(/^\/+/, '');
 
     if (cleanName.startsWith('assets/')) {

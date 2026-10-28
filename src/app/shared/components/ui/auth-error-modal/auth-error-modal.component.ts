@@ -10,11 +10,9 @@ import { Router } from '@angular/router';
   styleUrl: './auth-error-modal.component.css',
 })
 export class AuthErrorModalComponent {
-  // Entradas reativas utilizando a nova API do Angular (Signals)
   isOpen = input.required<boolean>();
   errorMessage = input<string>('E-mail ou senha incorretos.');
 
-  // Saídas para notificar o componente pai sobre o fechamento
   closed = output<void>();
 
   constructor(private router: Router) {}

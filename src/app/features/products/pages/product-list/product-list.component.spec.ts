@@ -10,8 +10,10 @@ describe('ProductListComponent', () => {
   let fixture: ComponentFixture<ProductListComponent>;
   let productServiceMock: {
     filteredProducts: ReturnType<typeof signal<Product[]>>;
+    currentPage: ReturnType<typeof signal<number>>;
     isTagActive: jest.Mock;
     toggleTagFilter: jest.Mock;
+    setPage: jest.Mock;
   };
 
   const generateMockProducts = (count: number): Product[] => {
@@ -32,14 +34,16 @@ describe('ProductListComponent', () => {
   beforeEach(async () => {
     productServiceMock = {
       filteredProducts: signal<Product[]>([]),
-      // Adicionado o cast 'as any' para contornar a restrição de tipo do @types/jest
+      currentPage: signal<number>(1),
       isTagActive: jest
         .fn()
         .mockImplementation(((tag: string) => tag === 'chocolate') as any),
       toggleTagFilter: jest.fn(),
+      setPage: jest.fn((page: number) => {
+        productServiceMock.currentPage.set(page);
+      }) as unknown as jest.Mock,
     };
 
-    // Mock global do método window.scrollTo com cast compatível
     window.scrollTo = jest.fn() as any;
 
     await TestBed.configureTestingModule({
@@ -60,9 +64,9 @@ describe('ProductListComponent', () => {
   // 1. ESTADO INICIAL E CÁLCULOS DE PAGINAÇÃO
   // ==========================================
   describe('Initial State & Pagination Computations', () => {
-    it('should initialize with currentPage as 1 and itemsPerPage as 8', () => {
-      expect(component.currentPage()).toBe(1);
+    it('should initialize with itemsPerPage as 8', () => {
       expect(component.itemsPerPage).toBe(8);
+      expect(component.currentPage()).toBe(1);
     });
 
     it('should compute pagination properties correctly when item count is within a single page', () => {
@@ -75,7 +79,6 @@ describe('ProductListComponent', () => {
     });
 
     it('should compute multiple pages and split products correctly across pages', () => {
-      // 10 produtos com 8 itens por página geram 2 páginas (8 na p1, 2 na p2)
       productServiceMock.filteredProducts.set(generateMockProducts(10));
 
       expect(component.totalPages()).toBe(2);
@@ -88,7 +91,7 @@ describe('ProductListComponent', () => {
       expect(component.paginatedProducts()[7].id).toBe(8);
 
       // Mudança para a Página 2
-      component.currentPage.set(2);
+      productServiceMock.currentPage.set(2);
       expect(component.paginatedProducts().length).toBe(2);
       expect(component.paginatedProducts()[0].id).toBe(9);
       expect(component.paginatedProducts()[1].id).toBe(10);
@@ -105,14 +108,9 @@ describe('ProductListComponent', () => {
       expect(active).toBe(true);
     });
 
-    it('should invoke toggleTagFilter on ProductService and reset currentPage to 1', () => {
-      component.currentPage.set(3);
-      expect(component.currentPage()).toBe(3);
-
+    it('should invoke toggleTagFilter on ProductService', () => {
       component.toggleFilter('vegan');
-
       expect(productServiceMock.toggleTagFilter).toHaveBeenCalledWith('vegan');
-      expect(component.currentPage()).toBe(1);
     });
   });
 
@@ -121,16 +119,15 @@ describe('ProductListComponent', () => {
   // ==========================================
   describe('Page Navigation (changePage)', () => {
     beforeEach(() => {
-      // Configura 15 produtos para gerar 2 páginas (8 + 7)
       productServiceMock.filteredProducts.set(generateMockProducts(15));
     });
 
-    it('should update currentPage and trigger smooth window scroll when navigating to a valid page', () => {
+    it('should invoke productService.setPage and trigger smooth window scroll when navigating to a valid page', () => {
       expect(component.currentPage()).toBe(1);
 
       component.changePage(2);
 
-      expect(component.currentPage()).toBe(2);
+      expect(productServiceMock.setPage).toHaveBeenCalledWith(2);
       expect(window.scrollTo).toHaveBeenCalledWith({
         top: 0,
         behavior: 'smooth',
@@ -138,21 +135,21 @@ describe('ProductListComponent', () => {
     });
 
     it('should ignore page change requests below page 1', () => {
-      component.currentPage.set(2);
+      productServiceMock.currentPage.set(2);
 
       component.changePage(0);
 
-      expect(component.currentPage()).toBe(2);
+      expect(productServiceMock.setPage).not.toHaveBeenCalledWith(0);
       expect(window.scrollTo).not.toHaveBeenCalled();
     });
 
     it('should ignore page change requests exceeding totalPages', () => {
       expect(component.totalPages()).toBe(2);
-      component.currentPage.set(1);
+      productServiceMock.currentPage.set(1);
 
-      component.changePage(3); // Total pages é 2
+      component.changePage(3);
 
-      expect(component.currentPage()).toBe(1);
+      expect(productServiceMock.setPage).not.toHaveBeenCalledWith(3);
       expect(window.scrollTo).not.toHaveBeenCalled();
     });
   });

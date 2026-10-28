@@ -24,7 +24,6 @@ export class FloatingCartButtonComponent {
 
   protected isModalOpen = signal(false);
 
-  // Referência ao botão "Não" para gerenciar o foco via Signal Query (Angular 17+)
   protected noButton = viewChild<ElementRef<HTMLButtonElement>>('noButton');
 
   protected openModal(): void {
