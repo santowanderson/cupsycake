@@ -15,7 +15,6 @@ import { ProductTagBadgeComponent } from '../product-tag-badge/product-tag-badge
   imports: [CurrencyPipe, ProductTagBadgeComponent],
 })
 export class ProductCardComponent {
-  // Substituição do @Input tradicional por Input Signal obrigatório do Angular 17
   readonly product = input.required<Product>();
 
   private readonly cartService = inject(CartService);

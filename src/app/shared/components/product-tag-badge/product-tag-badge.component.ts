@@ -15,7 +15,6 @@ interface TagConfig {
   styleUrl: 'product-tag-badge.component.css',
 })
 export class ProductTagBadgeComponent {
-  // Declaração correta de Input Signal no Angular 17+
   readonly product = input<Product>({} as Product);
 
   private static readonly TAG_METADATA_MAP: Record<string, TagConfig> = {

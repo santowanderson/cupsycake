@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { Observable, of, tap, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { UserProfile } from '../models/user.model';
 
@@ -17,7 +17,7 @@ export class AuthService {
   readonly isAuthenticated = computed(() => !!this.currentUser());
 
   constructor() {
-    // Verificação opcional controlada por flag, sem disparar requisição fantasma nos testes unitários
+    // Mantém a verificação rápida via flag local para evitar requisições desnecessárias se o storage estiver vazio
     if (localStorage.getItem('has_active_session') === 'true') {
       this.loadProfile().subscribe();
     }
@@ -27,17 +27,30 @@ export class AuthService {
     return this.http
       .post<any>(`${this.apiUrl}/login`, credentials, { withCredentials: true })
       .pipe(
-        switchMap((response) => {
-          // Se o backend retornou success: false (credenciais inválidas), geramos um erro lógico controlado
-          // que não gera ruído nem logs de erro HTTP no console do navegador.
+        tap((response) => {
           if (response && response.success === false) {
-            return throwError(() => ({
+            throw {
               status: 401,
               error: { error: response.error || 'Credenciais inválidas.' },
+            };
+          }
+
+          // MELHORIA DE PERFORMANCE (OCP): Aproveitamos os dados do usuário já retornados pelo login
+          // Evita realizar um novo HTTP GET /profile bloqueante antes de liberar a navegação.
+          localStorage.setItem('has_active_session', 'true');
+          if (response && response.user) {
+            this.currentUser.set(response.user);
+          }
+        }),
+        catchError((error) => {
+          // Garante tratamento padronizado do erro lançado acima ou retornado pelo HTTP
+          if (error.status === 401 || error.error?.success === false) {
+            return throwError(() => ({
+              status: 401,
+              error: { error: error.error?.error || 'Credenciais inválidas.' },
             }));
           }
-          localStorage.setItem('has_active_session', 'true');
-          return this.loadProfile();
+          return throwError(() => error);
         }),
       );
   }

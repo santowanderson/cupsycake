@@ -77,15 +77,15 @@ describe('AuthService', () => {
   // 1. TESTES DE LOGIN E CARREGAMENTO DE PERFIL (login / loadProfile)
   // ==========================================
   describe('Login & Profile Loading', () => {
-    it('should perform login POST request with credentials and automatically load user profile', () => {
+    it('should perform login POST request with credentials and update user profile from response payload', () => {
       const credentials = {
         email: 'wanderson@test.com',
         password: 'Password@123',
       };
-      let profileResult: UserProfile | undefined;
+      let loginResult: any;
 
-      service.login(credentials).subscribe((profile) => {
-        profileResult = profile;
+      service.login(credentials).subscribe((res) => {
+        loginResult = res;
       });
 
       // 1. Intercepta a requisição de login POST
@@ -95,17 +95,15 @@ describe('AuthService', () => {
       expect(loginReq.request.method).toBe('POST');
       expect(loginReq.request.body).toEqual(credentials);
       expect(loginReq.request.withCredentials).toBe(true);
-      loginReq.flush({ success: true });
 
-      // 2. O pipe switchMap aciona imediatamente o loadProfile GET
-      const profileReq = httpMock.expectOne(
-        'http://localhost:3000/api/auth/profile',
-      );
-      expect(profileReq.request.method).toBe('GET');
-      expect(profileReq.request.withCredentials).toBe(true);
-      profileReq.flush(mockUserProfile);
+      // Responde com o sucesso do login contendo o objeto user embutido
+      loginReq.flush({
+        success: true,
+        message: 'Login realizado com sucesso!',
+        user: mockUserProfile,
+      });
 
-      expect(profileResult).toEqual(mockUserProfile);
+      expect(loginResult.success).toBe(true);
       expect(service.currentUser()).toEqual(mockUserProfile);
       expect(service.isAuthenticated()).toBe(true);
       expect(localStorage.getItem('has_active_session')).toBe('true');

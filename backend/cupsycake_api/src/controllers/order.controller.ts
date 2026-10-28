@@ -14,13 +14,17 @@ export const createOrder = async (
       return;
     }
 
+    const numericCustomerId = Number(customerId);
+    if (isNaN(numericCustomerId)) {
+      res.status(401).json({ error: 'Não autorizado.' });
+      return;
+    }
+
     if (!shipping_address_id) {
-      res
-        .status(400)
-        .json({
-          error:
-            'O ID do endereço de entrega (shipping_address_id) é obrigatório.',
-        });
+      res.status(400).json({
+        error:
+          'O ID do endereço de entrega (shipping_address_id) é obrigatório.',
+      });
       return;
     }
 
@@ -30,7 +34,7 @@ export const createOrder = async (
     }
 
     const orderId = await OrderModel.create({
-      customer_id: customerId,
+      customer_id: numericCustomerId,
       shipping_address_id,
       shipping_fee,
       notes,
@@ -57,7 +61,13 @@ export const getCustomerOrders = async (
       return;
     }
 
-    const orders = await OrderModel.findByCustomerId(customerId);
+    const numericCustomerId = Number(customerId);
+    if (isNaN(numericCustomerId)) {
+      res.status(401).json({ error: 'Não autorizado.' });
+      return;
+    }
+
+    const orders = await OrderModel.findByCustomerId(numericCustomerId);
     res.status(200).json(orders);
   } catch (error) {
     console.error('Erro ao listar pedidos:', error);
