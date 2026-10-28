@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
-import { Tag } from '../../../core/models/product.model';
+import { Component, computed, input } from '@angular/core';
+import { Product, Tag } from '../../../core/models/product.model';
+
+interface TagConfig {
+  label: string;
+  badgeClass: string;
+}
 
 @Component({
   selector: 'app-product-tag-badge',
@@ -10,59 +15,83 @@ import { Tag } from '../../../core/models/product.model';
   styleUrl: 'product-tag-badge.component.css',
 })
 export class ProductTagBadgeComponent {
-  @Input({ required: true }) tag!: Tag | string;
+  // Declaração correta de Input Signal no Angular 17+
+  readonly product = input<Product>({} as Product);
 
-  /**
-   * Varre dinamicamente o objeto em busca de qualquer string válida
-   */
-  private get rawText(): string {
-    if (!this.tag) return '';
-    if (typeof this.tag === 'string') return this.tag;
+  private static readonly TAG_METADATA_MAP: Record<string, TagConfig> = {
+    'sem-lactose': { label: 'Sem Lactose', badgeClass: 'badge-lactose' },
+    'lactose-free': { label: 'Sem Lactose', badgeClass: 'badge-lactose' },
+    'sem-glutem': { label: 'Sem Glúten', badgeClass: 'badge-gluten' },
+    'sem-gluten': { label: 'Sem Glúten', badgeClass: 'badge-gluten' },
+    'sem-glúten': { label: 'Sem Glúten', badgeClass: 'badge-gluten' },
+    'gluten-free': { label: 'Sem Glúten', badgeClass: 'badge-gluten' },
+    vegano: { label: 'Vegano', badgeClass: 'badge-vegan' },
+    vegan: { label: 'Vegano', badgeClass: 'badge-vegan' },
+    vegetariano: { label: 'Vegetariano', badgeClass: 'badge-default' },
+    vegetarian: { label: 'Vegetariano', badgeClass: 'badge-default' },
+  };
 
-    if (typeof this.tag === 'object') {
-      const t = this.tag as any;
+  readonly processedTags = computed(() => {
+    // Acessa o sinal executando product()
+    const prod = this.product();
+    if (!prod || !prod.tags) return [];
 
-      // 1. Tenta as propriedades mais comuns
-      const directMatch =
-        t.slug ||
-        t.name ||
-        t.title ||
-        t.label ||
-        t.tag_name ||
-        t.tag_slug ||
-        t.description;
-      if (directMatch) return String(directMatch);
+    const rawTags = prod.tags as any;
+    let tagIdentifiers: (string | Tag)[] = [];
 
-      // 2. Fallback dinâmico: busca a primeira propriedade do objeto que seja uma string com texto
-      const firstStringValue = Object.values(t).find(
-        (val) => typeof val === 'string' && val.trim().length > 0,
-      );
-      if (firstStringValue) return String(firstStringValue);
+    if (typeof rawTags === 'string') {
+      tagIdentifiers = rawTags
+        .split(',')
+        .map((t: string) => t.trim())
+        .filter(Boolean);
+    } else if (Array.isArray(rawTags)) {
+      tagIdentifiers = rawTags;
     }
 
-    return String(this.tag);
+    return tagIdentifiers.map((tagItem) => {
+      const identifier = this.getTagIdentifier(tagItem);
+      return this.getTagConfig(identifier, tagItem);
+    });
+  });
+
+  private getTagIdentifier(tag: Tag | string): string {
+    if (!tag) return '';
+    if (typeof tag === 'string') {
+      return tag.trim().toLowerCase();
+    }
+    if (typeof tag === 'object' && tag !== null) {
+      const raw = tag.slug || tag.name || '';
+      return raw.trim().toLowerCase();
+    }
+    return String(tag).trim().toLowerCase();
   }
 
-  protected getTagLabel(): string {
-    const s = this.rawText.toLowerCase();
+  private getTagConfig(
+    identifier: string,
+    originalTag: Tag | string,
+  ): TagConfig {
+    if (ProductTagBadgeComponent.TAG_METADATA_MAP[identifier]) {
+      return ProductTagBadgeComponent.TAG_METADATA_MAP[identifier];
+    }
 
-    if (s.includes('gluten') || s.includes('sem-gluten')) return 'Sem Glúten';
-    if (s.includes('lactose') || s.includes('sem-lactose'))
-      return 'Sem Lactose';
-    if (s.includes('vegan')) return 'Vegano';
+    const fallbackText =
+      typeof originalTag === 'object' && originalTag !== null
+        ? originalTag.name || originalTag.slug || ''
+        : String(originalTag || '');
 
-    // Se encontrou algum texto no banco mas não bateu com as regras acima, exibe o próprio texto
-    return this.rawText || 'Especial';
-  }
+    const formattedLabel = fallbackText
+      ? fallbackText
+          .split('-')
+          .map(
+            (word) =>
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+          )
+          .join(' ')
+      : '';
 
-  protected getTagClass(): string {
-    const s = this.rawText.toLowerCase();
-
-    if (s.includes('gluten') || s.includes('sem-gluten')) return 'badge-gluten';
-    if (s.includes('lactose') || s.includes('sem-lactose'))
-      return 'badge-lactose';
-    if (s.includes('vegan')) return 'badge-vegan';
-
-    return 'badge-default';
+    return {
+      label: formattedLabel,
+      badgeClass: 'badge-default',
+    };
   }
 }

@@ -1,10 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from '@jest/globals';
+import { Product, Tag } from '../../../core/models/product.model';
 import { ProductTagBadgeComponent } from './product-tag-badge.component';
 
 describe('ProductTagBadgeComponent', () => {
   let component: ProductTagBadgeComponent;
   let fixture: ComponentFixture<ProductTagBadgeComponent>;
+
+  const mockProduct: Product = {
+    id: 1,
+    name: 'Cupcake Teste',
+    slug: 'cupcake-teste',
+    description: 'Delicioso cupcake',
+    price: 10.0,
+    stock_quantity: 5,
+    is_active: true,
+    image_url: 'test.png',
+    tags: [],
+    created_at: '2026-01-01T00:00:00Z',
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -16,100 +30,90 @@ describe('ProductTagBadgeComponent', () => {
   });
 
   it('should create the component successfully', () => {
-    component.tag = 'Test';
+    fixture.componentRef.setInput('product', mockProduct);
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
-  // ==========================================
-  // 1. TESTES DE EXTRAÇÃO DE TEXTO (rawText)
-  // ==========================================
-  describe('Raw Text Extraction & Fallbacks', () => {
-    it('should handle string input directly', () => {
-      component.tag = 'Gourmet';
-      expect((component as any).rawText).toBe('Gourmet');
+  describe('Empty or Falsy Tags', () => {
+    it('should return an empty array if tags is undefined or null', () => {
+      const productWithoutTags = { ...mockProduct, tags: undefined as any };
+      fixture.componentRef.setInput('product', productWithoutTags);
+      fixture.detectChanges();
+
+      expect(component.processedTags()).toEqual([]);
     });
 
-    it('should extract text from object using priority properties (slug, name, title, etc.)', () => {
-      component.tag = { name: 'Chocolate Belga' } as any;
-      expect((component as any).rawText).toBe('Chocolate Belga');
+    it('should return an empty array if tags array is empty', () => {
+      fixture.componentRef.setInput('product', { ...mockProduct, tags: [] });
+      fixture.detectChanges();
 
-      component.tag = { slug: 'sem-gluten-slug', name: 'Ignorado' } as any;
-      expect((component as any).rawText).toBe('sem-gluten-slug');
-    });
-
-    it('should fall back to the first available string property if common properties are missing', () => {
-      component.tag = { customField: 'Artesanal' } as any;
-      expect((component as any).rawText).toBe('Artesanal');
-    });
-
-    it('should return empty string when tag is falsy or empty', () => {
-      component.tag = '' as any;
-      expect((component as any).rawText).toBe('');
+      expect(component.processedTags()).toEqual([]);
     });
   });
 
-  // ==========================================
-  // 2. TESTES DE REGRAS DE RÓTULOS (getTagLabel)
-  // ==========================================
-  describe('getTagLabel - Formatting & Rules', () => {
-    it('should format gluten-related tags as "Sem Glúten"', () => {
-      const glutenInputs = ['gluten', 'sem-gluten', 'gluten-free'];
-      glutenInputs.forEach((input) => {
-        component.tag = input;
-        expect((component as any).getTagLabel()).toBe('Sem Glúten');
+  describe('String-based Tags Processing', () => {
+    it('should correctly process comma-separated string tags and map to correct metadata', () => {
+      const productWithStringTags = {
+        ...mockProduct,
+        tags: 'sem-lactose, sem-gluten, vegano' as any,
+      };
+      fixture.componentRef.setInput('product', productWithStringTags);
+      fixture.detectChanges();
+
+      const tags = component.processedTags();
+      expect(tags).toHaveLength(3);
+      expect(tags[0]).toEqual({
+        label: 'Sem Lactose',
+        badgeClass: 'badge-lactose',
       });
-    });
-
-    it('should format lactose-related tags as "Sem Lactose"', () => {
-      const lactoseInputs = ['lactose', 'sem-lactose', 'lactose-free'];
-      lactoseInputs.forEach((input) => {
-        component.tag = input;
-        expect((component as any).getTagLabel()).toBe('Sem Lactose');
+      expect(tags[1]).toEqual({
+        label: 'Sem Glúten',
+        badgeClass: 'badge-gluten',
       });
-    });
-
-    it('should format vegan tags as "Vegano"', () => {
-      const veganInputs = ['vegan', 'vegan-product'];
-      veganInputs.forEach((input) => {
-        component.tag = input;
-        expect((component as any).getTagLabel()).toBe('Vegano');
+      expect(tags[2]).toEqual({
+        label: 'Vegano',
+        badgeClass: 'badge-vegan',
       });
-    });
-
-    it('should return the raw text if no specific rule matches', () => {
-      component.tag = 'Edição Limitada';
-      expect((component as any).getTagLabel()).toBe('Edição Limitada');
-    });
-
-    it('should return "Especial" as fallback if raw text is empty', () => {
-      component.tag = '' as any;
-      expect((component as any).getTagLabel()).toBe('Especial');
     });
   });
 
-  // ==========================================
-  // 3. TESTES DE CLASSES CSS (getTagClass)
-  // ==========================================
-  describe('getTagClass - CSS Styling Rules', () => {
-    it('should return "badge-gluten" for gluten-related tags', () => {
-      component.tag = 'sem-gluten';
-      expect((component as any).getTagClass()).toBe('badge-gluten');
-    });
+  describe('Object-based Tags Processing (Tag[])', () => {
+    it('should correctly process an array of Tag objects using slug or name mapping', () => {
+      const tagObjects: Tag[] = [
+        { id: 1, name: 'Sem Lactose', slug: 'sem-lactose' },
+        { id: 2, name: 'Gluten Free', slug: 'gluten-free' },
+      ];
 
-    it('should return "badge-lactose" for lactose-related tags', () => {
-      component.tag = 'sem-lactose';
-      expect((component as any).getTagClass()).toBe('badge-lactose');
-    });
+      fixture.componentRef.setInput('product', {
+        ...mockProduct,
+        tags: tagObjects,
+      });
+      fixture.detectChanges();
 
-    it('should return "badge-vegan" for vegan tags', () => {
-      component.tag = 'vegan';
-      expect((component as any).getTagClass()).toBe('badge-vegan');
+      const tags = component.processedTags();
+      expect(tags).toHaveLength(2);
+      expect(tags[0].label).toBe('Sem Lactose');
+      expect(tags[0].badgeClass).toBe('badge-lactose');
+      expect(tags[1].label).toBe('Sem Glúten');
+      expect(tags[1].badgeClass).toBe('badge-gluten');
     });
+  });
 
-    it('should return "badge-default" for unknown custom tags', () => {
-      component.tag = 'Artesanal';
-      expect((component as any).getTagClass()).toBe('badge-default');
+  describe('Custom Tags Fallback', () => {
+    it('should format unmapped custom tags using title case and default badge class', () => {
+      fixture.componentRef.setInput('product', {
+        ...mockProduct,
+        tags: 'artesanal-especial' as any,
+      });
+      fixture.detectChanges();
+
+      const tags = component.processedTags();
+      expect(tags).toHaveLength(1);
+      expect(tags[0]).toEqual({
+        label: 'Artesanal Especial',
+        badgeClass: 'badge-default',
+      });
     });
   });
 });

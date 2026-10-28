@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 
 import { Product } from '../../../core/models/product.model';
 import { CartService } from '../../../core/services/cart.service';
@@ -15,7 +15,8 @@ import { ProductTagBadgeComponent } from '../product-tag-badge/product-tag-badge
   imports: [CurrencyPipe, ProductTagBadgeComponent],
 })
 export class ProductCardComponent {
-  @Input({ required: true }) product!: Product;
+  // Substituição do @Input tradicional por Input Signal obrigatório do Angular 17
+  readonly product = input.required<Product>();
 
   private readonly cartService = inject(CartService);
   protected readonly productService = inject(ProductService);
@@ -23,7 +24,8 @@ export class ProductCardComponent {
   isAdding: boolean = false;
 
   openModal(): void {
-    this.productModalService.open(this.product);
+    // Invoca o sinal product() para acessar o valor atual
+    this.productModalService.open(this.product());
   }
 
   addToCart(event: Event): void {
@@ -31,28 +33,10 @@ export class ProductCardComponent {
     if (this.isAdding) return;
 
     this.isAdding = true;
-    this.cartService.addToCart(this.product, 1);
+    this.cartService.addToCart(this.product(), 1);
 
     setTimeout(() => {
       this.isAdding = false;
     }, 1000);
-  }
-
-  get normalizedTags(): (string | any)[] {
-    const rawTags = this.product.tags as any;
-    if (!rawTags) return [];
-
-    if (typeof rawTags === 'string') {
-      return rawTags
-        .split(',')
-        .map((t: string) => t.trim())
-        .filter(Boolean);
-    }
-
-    if (Array.isArray(rawTags)) {
-      return rawTags;
-    }
-
-    return [];
   }
 }

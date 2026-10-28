@@ -17,23 +17,23 @@
 }
 
 .image-container {
-  position: relative; /* Essencial para ancorar as tags absolutamente dentro dele */
+  position: relative;
   border-radius: 10px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
   cursor: pointer;
 }
 
-/* Camada flutuante superior esquerda */
 .tags-overlay {
   position: absolute;
   top: 10px;
   left: 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 6px;
   z-index: 10;
-  pointer-events: none; /* Permite clicar na imagem por baixo caso necessário */
+  pointer-events: none;
 }
 
 .image-container img {

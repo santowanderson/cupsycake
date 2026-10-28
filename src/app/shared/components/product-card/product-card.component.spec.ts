@@ -48,7 +48,7 @@ describe('ProductCardComponent', () => {
     productServiceMock = {
       getImageUrl: jest
         .fn()
-        .mockReturnValue('http://localhost:3000/images/cupcake.png'), // Mock da função chamada no template
+        .mockReturnValue('http://localhost:3000/images/cupcake.png'),
     };
 
     await TestBed.configureTestingModule({
@@ -63,8 +63,8 @@ describe('ProductCardComponent', () => {
     fixture = TestBed.createComponent(ProductCardComponent);
     component = fixture.componentInstance;
 
-    // Atribui o input obrigatório antes da detecção de alterações
-    component.product = mockProduct;
+    // Atribui o input obrigatório via setInput do ComponentRef para Signals do Angular 17
+    fixture.componentRef.setInput('product', mockProduct);
     fixture.detectChanges();
   });
 
@@ -81,7 +81,7 @@ describe('ProductCardComponent', () => {
   // 1. TESTES DE INTERAÇÃO COM MODAL (openModal)
   // ==========================================
   describe('Modal Interaction', () => {
-    it('should call productModalService.open with the current product when openModal is triggered', () => {
+    it('should call productModalService.open with the current product signal value when openModal is triggered', () => {
       component.openModal();
 
       expect(productModalServiceMock.open).toHaveBeenCalledTimes(1);
@@ -127,30 +127,26 @@ describe('ProductCardComponent', () => {
   });
 
   // ==========================================
-  // 3. TESTES DE NORMALIZAÇÃO DE TAGS (normalizedTags)
+  // 3. TESTES DE REATIVIDADE DO INPUT SIGNAL (product)
   // ==========================================
-  describe('Tag Normalization (normalizedTags getter)', () => {
-    it('should return an empty array if product tags are falsy or missing', () => {
-      component.product = { ...mockProduct, tags: undefined as any };
-      expect(component.normalizedTags).toEqual([]);
-    });
-
-    it('should parse, trim, and filter comma-separated string tags correctly', () => {
-      component.product = {
+  describe('Input Signal Reactivity', () => {
+    it('should update component state and operations when product signal changes', () => {
+      const updatedProduct: Product = {
         ...mockProduct,
-        tags: '  sem-gluten, vegan , , artesanal ' as any,
+        id: 2,
+        name: 'Cupcake de Morango',
+        price: 15.0,
       };
-      expect(component.normalizedTags).toEqual([
-        'sem-gluten',
-        'vegan',
-        'artesanal',
-      ]);
-    });
 
-    it('should return the tag array directly if product tags are already provided as an array', () => {
-      const tagArray = ['lactose-free', 'premium'];
-      component.product = { ...mockProduct, tags: tagArray as any };
-      expect(component.normalizedTags).toEqual(tagArray);
+      // Atualiza o signal utilizando setInput
+      fixture.componentRef.setInput('product', updatedProduct);
+      fixture.detectChanges();
+
+      expect(component.product()).toEqual(updatedProduct);
+
+      // Testa se o modal recebe o novo produto atualizado
+      component.openModal();
+      expect(productModalServiceMock.open).toHaveBeenCalledWith(updatedProduct);
     });
   });
 });
